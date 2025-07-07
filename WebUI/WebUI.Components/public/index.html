@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebUI Components - Test Page</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background-color: #1e1e1e;
+            color: #cccccc;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #ffffff;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+        
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            background-color: #2d2d30;
+            border-radius: 6px;
+            border: 1px solid #3e3e42;
+        }
+        
+        .test-section h2 {
+            color: #ffffff;
+            margin-top: 0;
+            font-size: 16px;
+        }
+        
+        .component-row {
+            margin: 15px 0;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .component-row label {
+            min-width: 100px;
+            font-size: 12px;
+            color: #888;
+        }
+        
+        #log {
+            background-color: #1e1e1e;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 20px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .log-entry {
+            margin: 5px 0;
+            color: #00ff00;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WebUI Components Test Page</h1>
+        
+        <div class="test-section">
+            <h2>TestButton Component</h2>
+            <p>Testing the <code>&lt;webui-test-button&gt;</code> component with different variants and sizes.</p>
+            
+            <div class="component-row">
+                <label>Primary:</label>
+                <webui-test-button text="Primary Button" variant="primary"></webui-test-button>
+                <webui-test-button text="Small" variant="primary" size="small"></webui-test-button>
+                <webui-test-button text="Large" variant="primary" size="large"></webui-test-button>
+            </div>
+            
+            <div class="component-row">
+                <label>Secondary:</label>
+                <webui-test-button text="Secondary Button" variant="secondary"></webui-test-button>
+                <webui-test-button text="Small" variant="secondary" size="small"></webui-test-button>
+                <webui-test-button text="Large" variant="secondary" size="large"></webui-test-button>
+            </div>
+            
+            <div class="component-row">
+                <label>Danger:</label>
+                <webui-test-button text="Danger Button" variant="danger"></webui-test-button>
+                <webui-test-button text="Small" variant="danger" size="small"></webui-test-button>
+                <webui-test-button text="Large" variant="danger" size="large"></webui-test-button>
+            </div>
+            
+            <div class="component-row">
+                <label>Disabled:</label>
+                <webui-test-button text="Disabled Primary" variant="primary" disabled="true"></webui-test-button>
+                <webui-test-button text="Disabled Secondary" variant="secondary" disabled="true"></webui-test-button>
+                <webui-test-button text="Disabled Danger" variant="danger" disabled="true"></webui-test-button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Event Log</h2>
+            <p>Click buttons above to see events fired by the components:</p>
+            <div id="log"></div>
+        </div>
+    </div>
+
+    <!-- Load the component -->
+    <script type="module" src="TestButton.js"></script>
+    
+    <script>
+        // Listen for custom events from components
+        document.addEventListener('webui-click', function(event) {
+            const log = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.textContent = `Button clicked: ${JSON.stringify(event.detail)}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        });
+        
+        // Clear log after 20 entries
+        let logCount = 0;
+        const originalLog = document.getElementById('log');
+        new MutationObserver(function() {
+            logCount++;
+            if (logCount > 20) {
+                originalLog.innerHTML = '';
+                logCount = 0;
+            }
+        }).observe(originalLog, { childList: true });
+    </script>
+</body>
+</html> 

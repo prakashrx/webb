@@ -1,4 +1,75 @@
-# WebUI Project Overview - Modular Desktop Framework for Trading
+# WebUI Trading Framework - Project Overview
+
+## Architecture Overview
+**Modular Desktop Framework for Trading** - A VS Code-style extension system using C# WebView2 + Svelte components.
+
+### Core Components:
+1. **Control App** (WebUI) - Main coordination toolbar at desktop top
+2. **Host Processes** (WebUI.Host) - Isolated containers for plugin panels  
+3. **Component Library** (WebUI.Components) - Reusable Svelte web components
+4. **Framework Library** (WebUI.Framework) - C# WebView2 utilities
+5. **Bridge Library** (WebUI.Bridge) - C# ↔ WebView communication APIs
+
+## Component Library Architecture
+Following VS Code's modular design with **individually loadable web components**:
+
+### Core UI Components:
+- **Toolbar/Titlebar** - Main app toolbar, draggable, with menu
+- **Menu System** - Context menus, dropdowns, command palette
+- **Panel System** - Dockable panels, tabs, split views
+- **Settings UI** - Configuration panels, forms, toggles
+- **Extension Manager** - Install/uninstall, search, manage extensions
+- **Status Bar** - Bottom status indicators, actions
+- **Sidebar** - Navigation, file explorer, extension views
+
+### Trading-Specific Components:
+- **Order Forms** - Buy/sell panels, quick orders
+- **Market Data** - Price feeds, charts, order books
+- **Portfolio Views** - Positions, P&L, risk metrics
+- **News/Alerts** - Real-time updates, notifications
+
+## Current Status
+- **✅ Phase 1**: WebUI.Framework - WebView2 integration complete
+- **✅ Phase 2**: Component Library - Basic structure and MainToolbar component complete
+- **✅ Phase 3**: Clean Architecture - HTML/JS logic separated from C# code
+- **✅ Phase 4**: Control App - Main toolbar loading and working
+- **🔄 Phase 5**: UI Polish - Close button visibility, styling improvements
+- **⏳ Phase 6**: Bridge Library - Enhanced C# ↔ WebView communication
+- **⏳ Phase 7**: Host Processes - Plugin containers
+
+## Recent Achievements (Current Session)
+
+### ✅ Foundation Infrastructure Built
+- **Architecture**: Clean separation - C# loads HTML file, all logic in Svelte
+- **Proof of Concept**: Basic MainToolbar component loads and displays
+- **Build System**: Rollup compiles Svelte components to JS
+- **File Structure**: Proper organization of HTML, JS, and C# files
+
+### ✅ Basic Integration Working
+- **Status**: Application runs and loads components
+- **WebView**: Successfully loads HTML file
+- **Events**: Basic menu event handling works
+- **Architecture**: Proven separation of concerns
+
+### ❌ Current Limitations (Not Production Ready)
+- **UI Quality**: Very basic, not professional-looking
+- **Close Button**: Not visible/functional
+- **Styling**: Basic placeholder styling, no polish
+- **Icons**: Placeholder SVG, not proper icons
+- **Layout**: Basic CSS, needs proper design
+- **Components**: Only test components, no real component library
+
+### 🔄 Reality Check
+- **What Works**: Technical foundation and basic proof of concept
+- **What Doesn't**: Professional UI, polished user experience
+- **Current State**: ~10% complete - foundation only
+- **Next Priority**: Make UI actually look good and professional
+
+## Technical Stack
+- **Backend**: .NET 9.0, WebView2, Windows Forms
+- **Frontend**: Svelte web components, Rollup, TypeScript
+- **Communication**: JSON message passing, fs/io/ipc APIs
+- **Development**: Hot reload, modular loading, VS Code-like UX
 
 ## Project Naming & Structure Decision
 - **Framework Name**: WebUI 

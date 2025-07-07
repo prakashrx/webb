@@ -1,0 +1,23 @@
+{
+  "name": "webui-components",
+  "version": "1.0.0",
+  "description": "Modular Svelte components for WebUI Trading Framework",
+  "main": "public/index.html",
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "start": "npm run dev"
+  },
+  "devDependencies": {
+    "svelte": "^4.0.0",
+    "rollup": "^3.29.0",
+    "rollup-plugin-svelte": "^7.0.0",
+    "rollup-plugin-css-only": "^4.0.0",
+    "@rollup/plugin-node-resolve": "^15.0.0",
+    "@rollup/plugin-commonjs": "^25.0.0",
+    "rollup-plugin-livereload": "^2.0.0",
+    "rollup-plugin-serve": "^3.0.0",
+    "@rollup/plugin-terser": "^0.4.0"
+  },
+  "type": "module"
+} 

@@ -1,3 +1,4 @@
+using System.IO;
 using WebUI.Framework;
 
 namespace WebUI;
@@ -28,47 +29,51 @@ public sealed partial class Main : Form
             Controls.Add(_webViewHost.WebView);
             _webViewHost.WebView.Dock = DockStyle.Fill;
             
-            // Handle WebView messages
-            _webViewHost.MessageReceived += (sender, message) =>
+                    // Handle WebView messages
+        _webViewHost.MessageReceived += (sender, message) =>
+        {
+            if (message == "close")
             {
-                if (message == "close")
-                {
-                    Application.Exit();
-                    return;
-                }
+                Application.Exit();
+                return;
+            }
+            
+            // Handle JSON messages for component events
+            try
+            {
+                var jsonDoc = System.Text.Json.JsonDocument.Parse(message);
+                var root = jsonDoc.RootElement;
                 
-                // Handle JSON messages for drag and menu actions
-                try
+                if (root.TryGetProperty("type", out var typeElement))
                 {
-                    var jsonDoc = System.Text.Json.JsonDocument.Parse(message);
-                    var root = jsonDoc.RootElement;
+                    var type = typeElement.GetString();
                     
-                    if (root.TryGetProperty("type", out var typeElement))
+                    switch (type)
                     {
-                        var type = typeElement.GetString();
-                        
-                        switch (type)
-                        {
-                            case "menu":
-                                if (root.TryGetProperty("action", out var actionElement))
-                                {
-                                    var action = actionElement.GetString();
-                                    MessageBox.Show($"Menu action: {action}\n(Not implemented yet)", "WebUI", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                                }
-                                break;
-                                
-                            case "ready":
-                                // Toolbar is ready
-                                break;
-                        }
+                        case "webui-menu":
+                            if (root.TryGetProperty("action", out var actionElement))
+                            {
+                                var action = actionElement.GetString();
+                                HandleMenuAction(action);
+                            }
+                            break;
+                            
+                        case "webui-close":
+                            Application.Exit();
+                            break;
+                            
+                        case "ready":
+                            // Toolbar is ready
+                            break;
                     }
                 }
-                catch
-                {
-                    // If it's not JSON, treat as simple string command
-                    // (for backwards compatibility)
-                }
-            };
+            }
+            catch
+            {
+                // If it's not JSON, treat as simple string command
+                // (for backwards compatibility)
+            }
+        };
             
             // Handle form load to setup Win32 features after handle is created
             this.Load += (sender, e) =>
@@ -78,8 +83,8 @@ public sealed partial class Main : Form
                 EnableDragToMove();
             };
             
-            // Load test HTML
-            LoadTestPage();
+            // Load main toolbar
+            LoadMainToolbar();
         }
         catch (Exception ex)
         {
@@ -88,7 +93,7 @@ public sealed partial class Main : Form
         }
     }
 
-    private async void LoadTestPage()
+        private async void LoadMainToolbar()
     {
         try
         {
@@ -99,139 +104,18 @@ public sealed partial class Main : Form
                 EnableWebSecurity = false,
                 AllowInsecureContent = true
             });
-        
-        var testHtml = """
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <title>WebUI Control App</title>
-            <style>
-                * { margin: 0; padding: 0; box-sizing: border-box; }
-                body { 
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                    background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
-                    color: white;
-                    height: 48px;
-                    overflow: hidden;
-                    user-select: none;
-                }
-                .toolbar {
-                    display: flex;
-                    align-items: center;
-                    height: 48px;
-                    padding: 0 16px;
-                    gap: 16px;
-                }
-                .logo {
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    font-weight: 600;
-                    font-size: 14px;
-                }
-                .logo-icon {
-                    width: 20px;
-                    height: 20px;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    border-radius: 4px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 12px;
-                    font-weight: bold;
-                }
-                .menu-items {
-                    display: flex;
-                    gap: 8px;
-                    margin-left: auto;
-                }
-                .menu-item {
-                    padding: 6px 12px;
-                    border-radius: 4px;
-                    font-size: 12px;
-                    background: rgba(255,255,255,0.1);
-                    border: 1px solid rgba(255,255,255,0.2);
-                    cursor: pointer;
-                    transition: all 0.2s;
-                }
-                .menu-item:hover {
-                    background: rgba(255,255,255,0.2);
-                    border-color: rgba(255,255,255,0.3);
-                }
-                .close-btn {
-                    width: 28px;
-                    height: 28px;
-                    background: rgba(255,255,255,0.1);
-                    border: 1px solid rgba(255,255,255,0.2);
-                    border-radius: 4px;
-                    color: white;
-                    cursor: pointer;
-                    font-size: 14px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    transition: all 0.2s;
-                }
-                .close-btn:hover {
-                    background: rgba(255,75,75,0.8);
-                    border-color: rgba(255,75,75,1);
-                }
-                .status-indicator {
-                    width: 8px;
-                    height: 8px;
-                    background: #48bb78;
-                    border-radius: 50%;
-                    margin-left: 4px;
-                }
-            </style>
-        </head>
-        <body>
-            <div class="toolbar">
-                <div class="logo">
-                    <div class="logo-icon">W</div>
-                    <span>WebUI</span>
-                    <div class="status-indicator"></div>
-                </div>
-                <div class="menu-items">
-                    <div class="menu-item" onclick="showExtensions()">Extensions</div>
-                    <div class="menu-item" onclick="showSettings()">Settings</div>
-                    <div class="menu-item" onclick="showWorkspace()">Workspace</div>
-                </div>
-                <button class="close-btn" onclick="window.chrome.webview.postMessage('close');">×</button>
-            </div>
-            <script>
-                // Menu functions
-                function showExtensions() {
-                    window.chrome.webview.postMessage({ type: 'menu', action: 'extensions' });
-                }
-                
-                function showSettings() {
-                    window.chrome.webview.postMessage({ type: 'menu', action: 'settings' });
-                }
-                
-                function showWorkspace() {
-                    window.chrome.webview.postMessage({ type: 'menu', action: 'workspace' });
-                }
-                
-                // Test communication
-                window.chrome.webview.addEventListener('message', event => {
-                    console.log('Received from host:', event.data);
-                });
-                
-                // Send ready message
-                setTimeout(() => {
-                    window.chrome.webview.postMessage({
-                        type: 'ready',
-                        message: 'WebUI Toolbar Ready'
-                    });
-                }, 500);
-            </script>
-        </body>
-        </html>
-        """;
-        
-            await _webViewHost.NavigateAsync(testHtml, isHtml: true);
+            
+            // Get the path to the main toolbar HTML file
+            var componentsPath = Path.GetFullPath("../WebUI.Components/public");
+            var mainToolbarHtmlPath = Path.Combine(componentsPath, "main-toolbar.html");
+            
+            if (!File.Exists(mainToolbarHtmlPath))
+            {
+                throw new FileNotFoundException($"Main toolbar HTML file not found at: {mainToolbarHtmlPath}");
+            }
+            
+            // Navigate to the HTML file
+            await _webViewHost.NavigateAsync($"file:///{mainToolbarHtmlPath.Replace("\\", "/")}");
         }
         catch (Exception ex)
         {
@@ -255,6 +139,36 @@ public sealed partial class Main : Form
                 }
             };
         };
+    }
+    
+    private void HandleMenuAction(string action)
+    {
+        switch (action?.ToLower())
+        {
+            case "workspace":
+                MessageBox.Show("Workspace functionality coming soon!\n\nThis will allow you to:\n• Save/load trading layouts\n• Manage multiple workspace configurations\n• Switch between different setups", 
+                    "Workspace", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                break;
+                
+            case "extensions":
+                MessageBox.Show("Extensions functionality coming soon!\n\nThis will allow you to:\n• Browse available trading plugins\n• Install/uninstall extensions\n• Manage extension settings", 
+                    "Extensions", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                break;
+                
+            case "settings":
+                MessageBox.Show("Settings functionality coming soon!\n\nThis will allow you to:\n• Configure trading preferences\n• Set up API connections\n• Customize UI themes", 
+                    "Settings", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                break;
+                
+            case "help":
+                MessageBox.Show("WebUI Trading Platform v1.0.0\n\nA modular desktop framework for trading applications.\n\nBuilt with:\n• C# .NET 9.0\n• WebView2\n• Svelte Components", 
+                    "Help", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                break;
+                
+            default:
+                MessageBox.Show($"Menu action '{action}' not implemented yet.", "WebUI", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                break;
+        }
     }
 
     protected override void Dispose(bool disposing)
