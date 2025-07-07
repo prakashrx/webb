@@ -88,4 +88,14 @@ public static class WindowHelper
         MakeToolWindow(form);
         EnableDragMove(form);
     }
+
+    /// <summary>
+    /// Start dragging the window (use this when WebView2 or other controls capture mouse)
+    /// Call this from a MouseDown event handler
+    /// </summary>
+    public static void StartDragMove(Form form)
+    {
+        ReleaseCapture();
+        SendMessage(form.Handle, WM_NCLBUTTONDOWN, HT_CAPTION, 0);
+    }
 } 

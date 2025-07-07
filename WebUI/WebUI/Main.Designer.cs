@@ -1,24 +1,11 @@
-﻿namespace WebUI;
+namespace WebUI;
 
-partial class Form1
+partial class Main
 {
     /// <summary>
     ///  Required designer variable.
     /// </summary>
     private System.ComponentModel.IContainer components = null;
-
-    /// <summary>
-    ///  Clean up any resources being used.
-    /// </summary>
-    /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
-    protected override void Dispose(bool disposing)
-    {
-        if (disposing && (components != null))
-        {
-            components.Dispose();
-        }
-        base.Dispose(disposing);
-    }
 
     #region Windows Form Designer generated code
 
@@ -30,17 +17,18 @@ partial class Form1
     {
         SuspendLayout();
         // 
-        // Form1
+        // Main
         // 
         AutoScaleDimensions = new System.Drawing.SizeF(20F, 48F);
         AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-        BackColor = System.Drawing.Color.White;
-        ClientSize = new System.Drawing.Size(1826, 208);
+        BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
+        ClientSize = new System.Drawing.Size(1200, 48);
         ControlBox = false;
         FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
-        Text = "Form1";
+        StartPosition = FormStartPosition.Manual;
+        Text = "WebUI Control App";
         ResumeLayout(false);
     }
 
     #endregion
-}
+} 
