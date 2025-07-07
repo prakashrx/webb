@@ -1,0 +1,92 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Modern C# Development Rules
+
+## Core Principles
+
+### 1. **Modern C# Features First**
+- Use **latest C# syntax** (C# 12+) - file-scoped namespaces, global usings, record types, init-only properties
+- Prefer **expression-bodied members** for simple operations
+- Use **pattern matching** and **switch expressions** over traditional if/else chains
+- Leverage **nullable reference types** properly
+- Use **collection expressions** `[]` instead of `new List<T>()`
+- Use **primary constructors** for simple classes
+
+### 2. **Simplicity Over Complexity**
+- **KISS Principle**: Keep It Simple, Stupid
+- **YAGNI**: You Aren't Gonna Need It - don't build for "someday maybe"
+- **One responsibility** per class/method
+- **Prefer composition** over inheritance
+- **Avoid abstraction layers** unless you have 3+ concrete implementations
+
+### 3. **Anti-Over-Engineering Rules**
+- ❌ **Don't duplicate .NET/Framework functionality** - check what already exists first
+- ❌ **Don't create interfaces** with only one implementation (unless required for testing/DI)
+- ❌ **Don't create "Manager" classes** that do everything
+- ❌ **Don't write wrappers** around simple .NET APIs just for "abstraction"
+- ❌ **Don't build extensibility** until you have real extension needs
+
+### 4. **Code Style**
+- **File-scoped namespaces** (`namespace MyApp;` not `namespace MyApp { }`)
+- **Global usings** for common System namespaces
+- **Target-typed new** expressions (`List<string> items = [];`)
+- **String interpolation** over concatenation
+- **Async/await** properly (ConfigureAwait(false) in libraries)
+- **Minimal APIs** where appropriate
+
+### 5. **Decision Framework**
+Before writing any code, ask:
+1. **Does .NET already provide this?** (Check BCL, Windows Forms, WPF, etc.)
+2. **Do I need this now?** (Not "might need someday")
+3. **Can I solve this with 10 lines instead of 100?**
+4. **Am I creating abstraction for real variety or imagined flexibility?**
+
+### 6. **Examples of Good vs Bad**
+
+#### ✅ Good (Simple & Modern)
+```csharp
+namespace WebUI.Framework;
+
+public sealed class WebViewOptions
+{
+    public string? UserDataFolder { get; init; }
+    public string[]? BrowserArguments { get; init; }
+    public bool EnableDevTools { get; init; } = true;
+}
+
+public static class WindowHelper
+{
+    public static void SetupFloatingToolbar(Form form) =>
+        (form.FormBorderStyle, form.TopMost, form.ShowInTaskbar) = (FormBorderStyle.None, true, false);
+}
+```
+
+#### ❌ Bad (Over-engineered)
+```csharp
+namespace WebUI.Framework.WindowManagement.Abstractions
+{
+    public interface IWindowManager<T> where T : IWindow
+    {
+        Task<IWindowHandle> CreateWindowAsync<TOptions>(TOptions options) where TOptions : IWindowCreationOptions;
+    }
+    
+    public class DefaultWindowManagerFactory : IWindowManagerFactory
+    {
+        // 200+ lines of abstraction nobody asked for...
+    }
+}
+```
+
+### 7. **Code Review Checklist**
+- [ ] Uses modern C# syntax appropriately
+- [ ] Doesn't duplicate existing .NET functionality  
+- [ ] Single responsibility, no "God classes"
+- [ ] No unnecessary interfaces or abstractions
+- [ ] Readable and maintainable
+- [ ] Actually needed (not speculative)
+
+## Remember
+**"The best code is no code. The second best code is simple code."** 

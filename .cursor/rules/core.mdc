@@ -1,0 +1,13 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Before diving into anything, read your memory in `.cursor/memory` folder.
+If the folder does not exist create it.
+the memory files needs to be in consice, clear markdown format
+
+As you discover more about the project create or update your understanding in your memory.
+
+
+you may be asked to create new rules / update exisiting rules. create `<rule-name>.mdc` file in `.cursor/rules` folder accordingly.
