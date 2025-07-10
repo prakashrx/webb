@@ -1,173 +1,244 @@
-# WebUI Components Library - Implementation Notes
+# Extension UI Patterns - Component Strategy
 
-## ✅ Current Status: Foundation Complete
+## 🎯 Extension-First Architecture
 
-### What We Built
-- **✅ Project Structure**: Complete WebUI.Components directory with proper organization
-- **✅ Build System**: Rollup configuration for individual component compilation
-- **✅ Test Component**: Working TestButton.svelte with VS Code styling
-- **✅ Development Environment**: Live reload dev server setup
-- **✅ Documentation**: Comprehensive README and DEV-GUIDE
-- **✅ Integration Plan**: C# WebView2 integration strategy
+**Core Philosophy**: Everything is an extension. Components are built within extensions to create rich, modular UIs that integrate with the `window.host` API.
 
-### Key Files Created
+**Who builds components**: Extension developers creating trading panels, workspace management, settings UIs, etc.
+
+## 🏗️ Extension Component Model
+
+### Extension Structure
 ```
-WebUI.Components/
-├── package.json              # Dependencies and scripts
-├── rollup.config.js          # Build system configuration
-├── .gitignore               # Version control
-├── README.md                # Architecture documentation
-├── DEV-GUIDE.md             # Developer workflow guide
-├── src/
-│   └── TestButton.svelte    # Working test component
-└── public/
-    └── index.html           # Test page with event logging
-```
-
-## 🎯 Architecture Decisions
-
-### Component Strategy
-- **Web Components**: Using Svelte's `customElement: true` for universal compatibility
-- **Individual Loading**: Each component compiles to separate .js file
-- **Event-Driven**: Components communicate via custom events C# can intercept
-- **VS Code Styling**: Professional dark theme that users recognize
-
-### File Organization
-```
-src/
-├── core/           # Basic UI primitives (Button, Icon, Badge)
-├── layout/         # Layout components (Panel, TabStrip, SplitView)
-├── forms/          # Form controls (Input, Select, Checkbox)
-├── menus/          # Navigation (MenuBar, ContextMenu, CommandPalette)
-└── trading/        # Trading-specific (OrderForm, PriceDisplay, WatchList)
+extensions/
+├── toolbar/                    # Core toolbar extension
+│   ├── manifest.json          # Extension metadata
+│   ├── src/
+│   │   ├── ToolbarPanel.svelte # Main UI component
+│   │   └── activate.js         # Extension entry point
+│   └── package.json
+├── market-data/               # Market data extension
+│   ├── manifest.json
+│   ├── src/
+│   │   ├── PriceGrid.svelte   # High-performance data grid
+│   │   ├── ChartPanel.svelte  # Trading charts
+│   │   └── activate.js
+│   └── package.json
+└── workspace/                 # Workspace management extension
+    ├── manifest.json
+    ├── src/
+    │   ├── WorkspacePanel.svelte
+    │   └── activate.js
+    └── package.json
 ```
 
-### Integration Pattern
-```csharp
-// C# WebView2 Integration
-await webView.NavigateAsync("ComponentName.js", isModule: true);
+### Host API Integration
+Extensions use the `window.host` API to:
+- Register commands and handle events
+- Communicate with other extensions
+- Access core services (DOT tables, storage, etc.)
+- Manage panel lifecycle
 
-webView.WebMessageReceived += (sender, args) => {
-    var message = args.TryGetWebMessageAsString();
-    HandleComponentEvent(message);
-};
-```
-
-## 🧪 TestButton Component
-
-### Features Implemented
-- **Variants**: Primary, secondary, danger styling
-- **Sizes**: Small, medium, large
-- **States**: Disabled, hover, active, focus
-- **Events**: Custom 'webui-click' event with detailed payload
-- **VS Code Styling**: Professional dark theme colors
-
-### Usage Example
-```html
-<webui-test-button 
-  text="Execute Trade" 
-  variant="primary" 
-  size="large">
-</webui-test-button>
-```
-
-### Event Payload
 ```javascript
-{
-  text: "Execute Trade",
-  variant: "primary", 
-  timestamp: "2025-01-07T23:24:00.000Z"
+// activate.js - Extension entry point
+export function activate(context) {
+    // Register commands
+    const disposable = host.commands.registerCommand('market-data.refresh', () => {
+        // Handle refresh command
+    });
+    
+    // Create panel
+    const panel = host.window.createPanel('market-data', {
+        title: 'Market Data',
+        component: 'PriceGrid.svelte'
+    });
+    
+    // Subscribe to data events
+    host.events.on('market.price-update', (data) => {
+        panel.postMessage('price-update', data);
+    });
+    
+    context.subscriptions.push(disposable);
 }
+```
+
+## 🎨 UI Component Patterns
+
+### 1. Panel Components
+**Purpose**: Main UI containers that extensions register as panels
+
+```svelte
+<!-- PriceGrid.svelte -->
+<script>
+    import { onMount } from 'svelte';
+    
+    let priceData = [];
+    
+    onMount(() => {
+        // Subscribe to host events
+        host.events.on('price-update', (data) => {
+            priceData = data.prices;
+        });
+        
+        // Request initial data
+        host.commands.executeCommand('market-data.get-prices');
+    });
+</script>
+
+<div class="price-grid">
+    {#each priceData as price}
+        <div class="price-row">
+            <span class="symbol">{price.symbol}</span>
+            <span class="price">{price.last}</span>
+        </div>
+    {/each}
+</div>
+```
+
+### 2. Toolbar Components  
+**Purpose**: Extensions that contribute to the main application toolbar
+
+```svelte
+<!-- ToolbarPanel.svelte -->
+<script>
+    function handleMenuClick(item) {
+        // Execute host command
+        host.commands.executeCommand(`toolbar.${item.action}`);
+    }
+</script>
+
+<div class="toolbar">
+    <div class="logo">
+        <span class="status-indicator active"></span>
+        Trading Platform
+    </div>
+    
+    <nav class="menu">
+        {#each menuItems as item}
+            <button on:click={() => handleMenuClick(item)}>
+                {item.label}
+            </button>
+        {/each}
+    </nav>
+    
+    <button class="close-btn" on:click={() => host.commands.executeCommand('app.close')}>
+        ×
+    </button>
+</div>
+```
+
+### 3. High-Performance Data Components
+**Purpose**: Components that handle real-time data streams efficiently
+
+```svelte
+<!-- DataGrid.svelte -->
+<script>
+    import { onMount } from 'svelte';
+    
+    let rows = [];
+    let viewport = { start: 0, end: 100 };
+    
+    onMount(() => {
+        // High-performance binary data channel
+        host.binary.onMessage('market-data', (buffer) => {
+            // Process Arrow format or other binary data
+            const newRows = deserializeRows(buffer);
+            updateVisibleRows(newRows);
+        });
+    });
+    
+    function updateVisibleRows(newRows) {
+        // Update only visible rows for performance
+        rows = newRows.slice(viewport.start, viewport.end);
+    }
+</script>
+
+<div class="data-grid" bind:this={gridElement}>
+    <!-- Virtualized grid rendering -->
+</div>
 ```
 
 ## 🔧 Development Workflow
 
-### Setup
-```bash
-cd WebUI.Components
-npm install
-npm run dev  # Starts server at localhost:5000
+### Extension Development Process
+1. **Create Extension Directory**: Set up manifest and project structure
+2. **Develop Svelte Components**: Build UI using modern Svelte patterns
+3. **Integrate Host API**: Connect to commands, events, and services
+4. **Test in Host Environment**: Run extension in actual WebView2 host
+5. **Package & Deploy**: Bundle extension for distribution
+
+### Build Configuration
+Extensions use their own build process:
+```json
+{
+  "name": "market-data-extension",
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w"
+  },
+  "devDependencies": {
+    "rollup": "^3.0.0",
+    "rollup-plugin-svelte": "^7.0.0"
+  }
+}
 ```
 
-### Testing
-- Visual testing via test page
-- Event logging in browser console
-- C# integration testing via WebView2
+## 📦 Core Extension Examples
 
-### Production
-```bash
-npm run build  # Minified components in public/
-```
+### 1. MainToolbar Extension
+- **Purpose**: Main application toolbar with workspace management
+- **Components**: ToolbarPanel.svelte
+- **Host Integration**: Window management commands, workspace events
 
-## 🎨 Design System
+### 2. MarketData Extension  
+- **Purpose**: Real-time price displays and trading grids
+- **Components**: PriceGrid.svelte, ChartPanel.svelte
+- **Host Integration**: Binary data streams, DOT table subscriptions
 
-### Color Palette
-```css
-/* VS Code Dark Theme */
---bg-primary: #1e1e1e;
---bg-secondary: #2d2d30; 
---bg-tertiary: #3e3e42;
---text-primary: #cccccc;
---text-secondary: #888888;
---accent-primary: #0e639c;
---accent-danger: #a1260d;
-```
+### 3. Settings Extension
+- **Purpose**: Application configuration and preferences
+- **Components**: SettingsPanel.svelte, ConfigForm.svelte
+- **Host Integration**: Configuration API, storage service
 
-### Component Naming
-- Custom elements: `webui-component-name`
-- CSS classes: `.webui-component.variant.size`
-- Events: `webui-action-name`
+### 4. Workspace Extension
+- **Purpose**: Workspace management and panel layout
+- **Components**: WorkspacePanel.svelte, LayoutManager.svelte
+- **Host Integration**: Panel management, workspace persistence
 
-## 📋 Next Steps
+## 🎯 Design Principles
 
-### Phase 2A: Core Components
-- [ ] Button (enhanced version of TestButton)
-- [ ] Icon (SVG icon system)
-- [ ] Badge (status indicators)
-- [ ] Tooltip (contextual help)
+### Extension-Centric
+- Every UI element is owned by an extension
+- Extensions communicate via host API, not direct coupling
+- Extensions can be developed, tested, and deployed independently
 
-### Phase 2B: Layout Components  
-- [ ] Panel (dockable panels)
-- [ ] TabStrip (tab navigation)
-- [ ] SplitView (resizable splits)
-- [ ] StatusBar (bottom status)
+### Performance-Focused
+- Components handle high-frequency data efficiently
+- Binary data channels for real-time streams
+- Virtualized rendering for large datasets
 
-### Phase 2C: Integration Testing
-- [ ] Load components in C# WebView
-- [ ] Test event handling
-- [ ] Performance optimization
+### VS Code-Inspired
+- Familiar extension model for developers
+- Consistent API patterns across all extensions
+- Rich marketplace potential for third-party extensions
 
-## 🔗 Integration Points
+## 🚀 Next Steps
 
-### With WebUI.Framework
-- Components load via WebViewHost.NavigateAsync()
-- Events captured via MessageReceived handler
-- Styling coordinated with Windows Forms
+### Phase 1: Core Extension Framework
+- [ ] Define extension manifest format
+- [ ] Implement extension loader in C#
+- [ ] Create `window.host` API injection
 
-### With Main Control App
-- Toolbar components for main app UI
-- Menu components for application menus
-- Status components for system state
+### Phase 2: Foundation Extensions
+- [ ] Convert MainToolbar to extension
+- [ ] Build Settings extension
+- [ ] Create Workspace management extension
 
-### With Host Processes
-- Panel components for plugin containers
-- Layout components for window management
-- Trading components for business logic
+### Phase 3: Trading Extensions
+- [ ] High-performance data grid extension
+- [ ] Chart panel extension
+- [ ] Order management extension
 
-## 💡 Key Insights
+---
 
-1. **VS Code Inspiration**: Using familiar UI patterns reduces learning curve
-2. **Modular Architecture**: Individual components enable lazy loading
-3. **Event-Driven Design**: Clean separation between UI and business logic
-4. **Web Standards**: Using Web Components ensures future compatibility
-5. **Developer Experience**: Hot reload and visual testing speed development
-
-## 🚀 Success Metrics
-
-- **✅ Working Build System**: Rollup compiles components successfully
-- **✅ Visual Testing**: Test page shows components render correctly
-- **✅ Event System**: Custom events fire and can be logged
-- **✅ Styling**: VS Code-inspired design looks professional
-- **✅ Documentation**: Complete guides for development and architecture
-
-The component library foundation is solid and ready for building out the complete component ecosystem. 
+*Building a modular, extensible trading platform where every UI element is a plugin that can be developed, tested, and deployed independently.* 
