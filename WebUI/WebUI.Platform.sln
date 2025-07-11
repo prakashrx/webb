@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # 
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebUI", "WebUI\WebUI.csproj", "{9DADB4B1-96AE-431A-A2EF-E59C6B3AD6BF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebUI.Shell", "Shell\WebUI.Shell.csproj", "{9DADB4B1-96AE-431A-A2EF-E59C6B3AD6BF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebUI.Framework", "WebUI.Framework\WebUI.Framework.csproj", "{BA0AE675-7C8E-44CA-8F49-25D571F00C9C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebUI.Core", "Core\WebUI.Core.csproj", "{BA0AE675-7C8E-44CA-8F49-25D571F00C9C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

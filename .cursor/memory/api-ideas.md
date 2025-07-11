@@ -92,9 +92,9 @@ interface HostApi {
 
 ### Putting It All Together
 
-1. **Inject** a `const host: HostApi = acquireHostApi()` into every panel.
+1. **Inject** a `const api: HostApi = getAPI()` into every panel.
 2. In your **`activate(ctx)`** you wire up panels, commands, events, and services exactly like VS Code.
-3. **Extensions** live in their own folders with `package.json` + `manifest.json`, declare their panels/commands, and use `host` to hook in.
+3. **Extensions** live in their own folders with `package.json` + `manifest.json`, declare their panels/commands, and use `api` to hook in.
 4. **Core extensions** (the ones shipped with your app) register built-ins like the DOT table explorer or settings UI.
 
 With this surface, writing a new extension or panel feels just like VS Code—**familiar**, **modular**, and **powerful**—yet optimized for WebView2, Svelte, and your high-perf trading data.

@@ -1,4 +1,4 @@
-# WebUI Trading Framework - Project Overview
+# WebUI Platform - Project Overview
 
 ## Value Proposition
 
@@ -10,18 +10,18 @@
 
 ### 1. Infrastructure (Foundation)
 
-* **WebUI.Framework**: C# + WebView2 core (hosting, IPC router, process & WebView pooling)
-* **WebUI.Components**: Svelte component library + build tooling
+* **WebUI.Core**: C# + WebView2 core (hosting, IPC router, process & WebView pooling)
+* **WebUI.UIComponents**: Svelte component library + build tooling
 
 ### 2. Applications (User‑Facing)
 
-* **WebUI**: Control App (floating toolbar, workspace manager)
+* **WebUI.Shell**: Control App (floating toolbar, workspace manager)
 * **WebUI.Host**: Host processes (isolated plugin containers with Golden Layout)
 
 ### 3. Extension System
 
 * **Extension Loader**: Manifest discovery, dependency resolution, activation lifecycle
-* **API Injection**: `window.host` interface (commands, events, window, services)
+* **API Injection**: `window.api` interface (commands, events, window, services)
 
 ## Workspace Concept
 
@@ -35,18 +35,18 @@ Workspaces are JSON files you can load/save/share.
 
 ## Current Status & Phases
 
-1. **Phase 1 (✅)**: Framework — WebView2 hosting & basic IPC
-2. **Phase 2 (✅)**: Foundation — Svelte build, clean project structure
-3. **Phase 3 (🔄)**: IPC Router — Multi‑process JSON/binary routing, pub/sub & RPC
-4. **Phase 4 (⏳)**: API Injection — Define & inject `window.host` surface, permissions
-5. **Phase 5 (⏳)**: Extension Loader — Manifest parsing & activation runtime
-6. **Phase 6 (⏳)**: POC Extension — Convert MainToolbar to first extension
+1. **Phase 1 (✅)**: Framework — WebView2 hosting & basic IPC
+2. **Phase 2 (✅)**: Foundation — Svelte build, clean project structure
+3. **Phase 3 (🔄)**: IPC Router — Multi‑process JSON/binary routing, pub/sub & RPC
+4. **Phase 4 (⏳)**: API Injection — Define & inject `window.api` surface, permissions
+5. **Phase 5 (⏳)**: Extension Loader — Manifest parsing & activation runtime
+6. **Phase 6 (⏳)**: POC Extension — Convert MainToolbar to first extension
 
-## Next Steps (Top 3)
+## Next Steps (Top 3)
 
-1. **Design `window.host` API**
+1. **Design `window.api` API**
 
-   * `host.commands`, `host.events`, `host.window`, `host.services`
+   * `api.commands`, `api.events`, `api.window`, `api.services`
 2. **Build IPC Router**
 
    * JSON & binary dispatch, wildcard subscriptions
@@ -63,21 +63,23 @@ Workspaces are JSON files you can load/save/share.
 
   * **Pull**: `getRows(start, count)` on demand
   * **Push**: `pushUpdate(rowIndex, data)` for visible rows
-* **Implementation**: AG Grid in Svelte + `window.host` transports Arrow batches
+* **Implementation**: AG Grid in Svelte + `window.api` transports Arrow batches
 
 ## Technical Stack & Project Structure
 
-* **Backend**: .NET 9.0, WebView2, Windows Forms
+* **Backend**: .NET 9.0, WebView2, Windows Forms
 * **Frontend**: Svelte + Tailwind, Rollup/Vite, TypeScript
 * **IPC**: JSON & binary over native WebView2 bridge
 * **Dev**: Hot reload, real WebView testing, workspace persistence
 
 ```
-WebUI/                  # Solution
-├── WebUI/              # Control App
-├── WebUI.Host/         # Plugin hosts (Golden Layout)
-├── WebUI.Framework/    # Core libs (WebView2, IPC, pooling)
-└── WebUI.Components/   # Svelte UI library
+WebUI.Platform/             # Solution
+├── Shell/                  # Control App (WebUI.Shell project)
+├── Host/                   # Future: Plugin hosts (Golden Layout)
+├── Core/                   # Core libs (WebUI.Core project)
+├── UIComponents/           # Svelte UI library
+├── Extensions/             # Future: Extension system
+└── Tools/                  # Future: CLI tools
 ```
 
 ## Design Principles
@@ -89,26 +91,26 @@ WebUI/                  # Solution
 
 ## Implementation Roadmap (Detail)
 
-### Phase 3: IPC Router
+### Phase 3: IPC Router
 
 * Multi‑process message bus (JSON & binary)
 * Pub/sub with wildcard support
 * RPC pattern for commands
 * Track host processes & capabilities
 
-### Phase 4: API Injection
+### Phase 4: API Injection
 
-* Finalize TypeScript interface for `window.host`
+* Finalize TypeScript interface for `window.api`
 * Inject into WebViews with context isolation
 * Implement permissions & error boundaries
 
-### Phase 5: Extension Loader
+### Phase 5: Extension Loader
 
 * Discover & parse manifests
 * Resolve dependencies
 * Activate extensions in hosts
 
-### Phase 6: POC Extension
+### Phase 6: POC Extension
 
 * "Hello World" plugin with UI panel
 * Test host commands & events

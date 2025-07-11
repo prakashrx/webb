@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <ItemGroup>
-      <ProjectReference Include="..\WebUI.Framework\WebUI.Framework.csproj" />
+      <ProjectReference Include="..\Core\WebUI.Core.csproj" />
     </ItemGroup>
 
     <PropertyGroup>

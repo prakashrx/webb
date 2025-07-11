@@ -2,7 +2,7 @@
 
 ## 🎯 Extension-First Architecture
 
-**Core Philosophy**: Everything is an extension. Components are built within extensions to create rich, modular UIs that integrate with the `window.host` API.
+**Core Philosophy**: Everything is an extension. Components are built within extensions to create rich, modular UIs that integrate with the `window.api` API.
 
 **Who builds components**: Extension developers creating trading panels, workspace management, settings UIs, etc.
 
@@ -33,7 +33,7 @@ extensions/
 ```
 
 ### Host API Integration
-Extensions use the `window.host` API to:
+Extensions use the `window.api` API to:
 - Register commands and handle events
 - Communicate with other extensions
 - Access core services (DOT tables, storage, etc.)
@@ -43,18 +43,18 @@ Extensions use the `window.host` API to:
 // activate.js - Extension entry point
 export function activate(context) {
     // Register commands
-    const disposable = host.commands.registerCommand('market-data.refresh', () => {
+    const disposable = api.commands.registerCommand('market-data.refresh', () => {
         // Handle refresh command
     });
     
     // Create panel
-    const panel = host.window.createPanel('market-data', {
+    const panel = api.window.createPanel('market-data', {
         title: 'Market Data',
         component: 'PriceGrid.svelte'
     });
     
     // Subscribe to data events
-    host.events.on('market.price-update', (data) => {
+    api.events.on('market.price-update', (data) => {
         panel.postMessage('price-update', data);
     });
     
@@ -75,13 +75,13 @@ export function activate(context) {
     let priceData = [];
     
     onMount(() => {
-        // Subscribe to host events
-        host.events.on('price-update', (data) => {
+        // Subscribe to api events
+        api.events.on('price-update', (data) => {
             priceData = data.prices;
         });
         
         // Request initial data
-        host.commands.executeCommand('market-data.get-prices');
+        api.commands.executeCommand('market-data.get-prices');
     });
 </script>
 
@@ -102,8 +102,8 @@ export function activate(context) {
 <!-- ToolbarPanel.svelte -->
 <script>
     function handleMenuClick(item) {
-        // Execute host command
-        host.commands.executeCommand(`toolbar.${item.action}`);
+        // Execute api command
+        api.commands.executeCommand(`toolbar.${item.action}`);
     }
 </script>
 
@@ -121,7 +121,7 @@ export function activate(context) {
         {/each}
     </nav>
     
-    <button class="close-btn" on:click={() => host.commands.executeCommand('app.close')}>
+    <button class="close-btn" on:click={() => api.commands.executeCommand('app.close')}>
         ×
     </button>
 </div>
@@ -140,7 +140,7 @@ export function activate(context) {
     
     onMount(() => {
         // High-performance binary data channel
-        host.binary.onMessage('market-data', (buffer) => {
+        api.binary.onMessage('market-data', (buffer) => {
             // Process Arrow format or other binary data
             const newRows = deserializeRows(buffer);
             updateVisibleRows(newRows);
@@ -188,12 +188,12 @@ Extensions use their own build process:
 ### 1. MainToolbar Extension
 - **Purpose**: Main application toolbar with workspace management
 - **Components**: ToolbarPanel.svelte
-- **Host Integration**: Window management commands, workspace events
+- **API Integration**: Window management commands, workspace events
 
 ### 2. MarketData Extension  
 - **Purpose**: Real-time price displays and trading grids
 - **Components**: PriceGrid.svelte, ChartPanel.svelte
-- **Host Integration**: Binary data streams, DOT table subscriptions
+- **API Integration**: Binary data streams, DOT table subscriptions
 
 ### 3. Settings Extension
 - **Purpose**: Application configuration and preferences
