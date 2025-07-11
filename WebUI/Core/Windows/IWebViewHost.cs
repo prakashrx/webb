@@ -1,7 +1,7 @@
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
 
-namespace WebUI.Framework;
+namespace WebUI.Core.Windows;
 
 /// <summary>
 /// Interface for managing WebView instances within a host application

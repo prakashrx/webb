@@ -10,14 +10,33 @@ WebUI.Platform/
 │   ├── MainForm.cs            # Windows Forms lifecycle manager
 │   └── WebUI.Shell.csproj     # Project configuration
 ├── Core/                       # Core framework library
-│   ├── BrowserWindow.cs       # Main API - Tauri-like window creation
-│   ├── WebViewHost.cs         # WebView2 wrapper/host implementation
-│   ├── IWebViewHost.cs        # WebView host interface
-│   ├── WebViewOptions.cs      # Configuration options class
-│   ├── WindowControls.cs      # Window control operations for frameless windows
-│   ├── WindowHelper.cs        # Window utility functions
+│   ├── Windows/               # Window management classes (WebUI.Core.Windows)
+│   │   ├── BrowserWindow.cs   # Main API - Tauri-like window creation
+│   │   ├── WebViewHost.cs     # WebView2 wrapper/host implementation
+│   │   ├── IWebViewHost.cs    # WebView host interface
+│   │   ├── WebViewOptions.cs  # Configuration options class
+│   │   ├── WindowControls.cs  # Window control operations for frameless windows
+│   │   └── WindowHelper.cs    # Window utility functions
+│   ├── IPC/                   # Inter-process communication (WebUI.Core.IPC)
+│   │   └── README.md          # Placeholder for future IPC classes
+│   ├── Extensions/            # Extension management (WebUI.Core.Extensions)
+│   │   └── README.md          # Placeholder for future extension classes
 │   ├── GlobalUsings.cs        # Global namespace imports
 │   └── WebUI.Core.csproj      # Framework project configuration
+├── Shared/                     # Shared contracts and models
+│   ├── Contracts/             # Platform API contracts
+│   │   ├── IExtension.cs      # Extension interface
+│   │   ├── IExtensionContext.cs # Extension context interface
+│   │   ├── ICommandsApi.cs    # Commands API interface
+│   │   ├── IEventsApi.cs      # Events API interface  
+│   │   ├── IWindowApi.cs      # Window API interface
+│   │   ├── IPanel.cs          # Panel interface
+│   │   └── IServicesApi.cs    # Services API interface
+│   ├── Models/                # Shared data models
+│   │   ├── ExtensionManifest.cs # Extension manifest model
+│   │   └── ExtensionContributions.cs # Extension contribution models
+│   ├── GlobalUsings.cs        # Global namespace imports
+│   └── WebUI.Shared.csproj    # Shared project configuration
 ├── UIComponents/               # Svelte component library
 │   ├── src/                   # Svelte source files
 │   ├── public/                # Static assets
@@ -195,7 +214,8 @@ var window = new BrowserWindow("Title", 800, 600, frameless: true);
 ```
 
 ## Build Configuration
-- WebUI.Platform.sln contains WebUI.Shell and WebUI.Core projects
-- WebUI.Core builds to class library
-- WebUI.Shell builds to Windows executable with WebUI.Core reference
+- WebUI.Platform.sln contains WebUI.Shell, WebUI.Core, and WebUI.Shared projects
+- WebUI.Shared builds to class library with shared contracts and models
+- WebUI.Core builds to class library with WebUI.Shared reference
+- WebUI.Shell builds to Windows executable with WebUI.Core and WebUI.Shared references  
 - WebUI.UIComponents contains Svelte build system (separate from main .NET build) 

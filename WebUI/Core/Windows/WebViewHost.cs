@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
 
-namespace WebUI.Framework;
+namespace WebUI.Core.Windows;
 
 /// <summary>
 /// Implementation of IWebViewHost for managing WebView instances

@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using System.Drawing;
 
-namespace WebUI.Framework;
+namespace WebUI.Core.Windows;
 
 /// <summary>
 /// Provides window control functionality for frameless browser windows

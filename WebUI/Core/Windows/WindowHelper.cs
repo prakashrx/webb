@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace WebUI.Framework;
+namespace WebUI.Core.Windows;
 
 /// <summary>
 /// Simple helper for window operations that Windows Forms doesn't provide well

@@ -2,7 +2,7 @@ using System.Drawing;
 using System.Windows.Forms;
 using Microsoft.Web.WebView2.Core;
 
-namespace WebUI.Framework;
+namespace WebUI.Core.Windows;
 
 /// <summary>
 /// A simple, instantiable browser window similar to Tauri's API

@@ -2,6 +2,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Core\WebUI.Core.csproj" />
+      <ProjectReference Include="..\Shared\WebUI.Shared.csproj" />
     </ItemGroup>
 
     <PropertyGroup>

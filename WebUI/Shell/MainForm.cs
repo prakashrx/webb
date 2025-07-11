@@ -1,5 +1,5 @@
 using System.Windows.Forms;
-using WebUI.Framework;
+using WebUI.Core.Windows;
 
 namespace WebUI;
 

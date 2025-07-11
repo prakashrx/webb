@@ -1,4 +1,4 @@
-namespace WebUI.Framework;
+namespace WebUI.Core.Windows;
 
 /// <summary>
 /// Configuration options for WebView instances

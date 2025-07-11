@@ -1,4 +1,4 @@
-// Global usings for common namespaces across the WebUI.Framework project
+// Global usings for common namespaces across the WebUI.Core project
 global using System;
 global using System.Collections.Generic;
 global using System.Drawing;
