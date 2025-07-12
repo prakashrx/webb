@@ -1,6 +1,6 @@
 using WebUI.Core.Windows;
 
-namespace WebUI;
+namespace WebUI.Workbench;
 
 static class Program
 {
@@ -14,8 +14,8 @@ static class Program
         // see https://aka.ms/applicationconfiguration.
         ApplicationConfiguration.Initialize();
         
-        // Create and run the main form
-        var mainForm = new MainForm();
-        Application.Run(mainForm);
+        // Create and run the workbench entry point
+        var workbenchEntry = new WorkbenchEntry();
+        Application.Run(workbenchEntry);
     }    
 }

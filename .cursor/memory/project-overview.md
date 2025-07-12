@@ -21,7 +21,7 @@
 ### 3. Extension System
 
 * **Extension Loader**: Manifest discovery, dependency resolution, activation lifecycle
-* **API Injection**: `window.api` interface (commands, events, window, services)
+* **API Injection**: `webui.api` interface (commands, events, window, services)
 
 ## Workspace Concept
 
@@ -36,21 +36,23 @@ Workspaces are JSON files you can load/save/share.
 ## Current Status & Phases
 
 1. **Phase 1 (✅)**: Framework — WebView2 hosting & basic IPC
-2. **Phase 2 (✅)**: Foundation — Svelte build, clean project structure
-3. **Phase 3 (🔄)**: IPC Router — Multi‑process JSON/binary routing, pub/sub & RPC
-4. **Phase 4 (⏳)**: API Injection — Define & inject `window.api` surface, permissions
-5. **Phase 5 (⏳)**: Extension Loader — Manifest parsing & activation runtime
+2. **Phase 2 (✅)**: Foundation — Svelte build, clean project structure  
+3. **Phase 3 (🔄)**: Core API Architecture — HostApiBridge, modular API components
+4. **Phase 4 (⏳)**: Extension Foundation — Manifest system, extension loader
+5. **Phase 5 (⏳)**: Developer Experience — Documentation, CLI tools, scaffolding
 6. **Phase 6 (⏳)**: POC Extension — Convert MainToolbar to first extension
+
+**Current Progress**: 6/16 tasks completed (37.5%)
 
 ## Next Steps (Top 3)
 
-1. **Design `window.api` API**
+1. **Design `webui.api` API**
 
    * `api.commands`, `api.events`, `api.window`, `api.services`
-2. **Build IPC Router**
+2. **Build HostApiBridge**
 
-   * JSON & binary dispatch, wildcard subscriptions
-   * Request/response RPC, process registry
+   * Modular API components with lazy-loading
+   * Clean JavaScript interface abstraction
 3. **Bootstrap POC Extension**
 
    * Minimal manifest + Svelte panel using host APIs
@@ -63,7 +65,7 @@ Workspaces are JSON files you can load/save/share.
 
   * **Pull**: `getRows(start, count)` on demand
   * **Push**: `pushUpdate(rowIndex, data)` for visible rows
-* **Implementation**: AG Grid in Svelte + `window.api` transports Arrow batches
+* **Implementation**: AG Grid in Svelte + `webui.api` transports Arrow batches
 
 ## Technical Stack & Project Structure
 
@@ -100,7 +102,7 @@ WebUI.Platform/             # Solution
 
 ### Phase 4: API Injection
 
-* Finalize TypeScript interface for `window.api`
+* Finalize TypeScript interface for `webui.api`
 * Inject into WebViews with context isolation
 * Implement permissions & error boundaries
 

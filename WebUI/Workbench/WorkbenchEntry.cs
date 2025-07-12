@@ -1,13 +1,13 @@
 using System.Windows.Forms;
 using WebUI.Core.Windows;
 
-namespace WebUI;
+namespace WebUI.Workbench;
 
-public partial class MainForm : Form
+public partial class WorkbenchEntry : Form
 {
     private BrowserWindow? _browserWindow;
 
-    public MainForm()
+    public WorkbenchEntry()
     {
         InitializeComponent();
         InitializeAsync();
@@ -155,13 +155,21 @@ public partial class MainForm : Form
                             font-size: 14px;
                             opacity: 0.8;
                         }
+                        
+                        code {
+                            background: rgba(0, 0, 0, 0.3);
+                            padding: 2px 6px;
+                            border-radius: 4px;
+                            font-family: 'Consolas', 'Monaco', monospace;
+                            font-size: 0.9em;
+                        }
                     </style>
                 </head>
                 <body>
                     <!-- Custom Title Bar -->
                     <div class="titlebar">
                         <div class="titlebar-drag">
-                            <div class="window-title">🚀 WebUI Framework - Frameless Window</div>
+                            <div class="window-title">🚀 WebUI Platform - Extension Framework</div>
                         </div>
                         <div class="window-controls">
                             <button class="window-control minimize" onclick="minimizeWindow()">−</button>
@@ -173,9 +181,9 @@ public partial class MainForm : Form
                     <!-- Main Content -->
                     <div class="content">
                         <div class="container">
-                            <h1>🚀 WebUI Framework</h1>
-                            <p>Your frameless browser window is ready!</p>
-                            <p>This window has a custom HTML title bar and behaves like a modern desktop app.</p>
+                            <h1>🚀 WebUI Platform</h1>
+                            <p>Your extension platform is ready!</p>
+                            <p>This window uses the new <code>webui.api</code> interface for clean JavaScript-to-C# communication.</p>
                             
                             <div>
                                 <button class="demo-button" onclick="testWindowControls()">Test Window Controls</button>
@@ -184,37 +192,52 @@ public partial class MainForm : Form
                             </div>
                             
                             <div class="status" id="status">
-                                Drag the title bar to move the window. Uses -webkit-app-region CSS!
+                                Try the new webui.api interface! Clean JavaScript-to-C# communication.
                             </div>
                         </div>
                     </div>
                     
                     <script>
+                        // Create WebUI Platform API
+                        window.webui = {
+                            api: {
+                                window: {
+                                    minimize: () => window.chrome.webview.hostObjects.api.Minimize(),
+                                    maximize: () => window.chrome.webview.hostObjects.api.Maximize(),
+                                    restore: () => window.chrome.webview.hostObjects.api.Restore(),
+                                    close: () => window.chrome.webview.hostObjects.api.Close(),
+                                    isMaximized: () => window.chrome.webview.hostObjects.api.IsMaximized(),
+                                    toggleMaximize: () => {
+                                        if (webui.api.window.isMaximized()) {
+                                            webui.api.window.restore();
+                                        } else {
+                                            webui.api.window.maximize();
+                                        }
+                                    }
+                                }
+                            }
+                        };
+                        
                         function minimizeWindow() {
-                            window.chrome.webview.hostObjects.windowControls.Minimize();
+                            webui.api.window.minimize();
                             updateStatus('Window minimized');
                         }
                         
                         function toggleMaximize() {
-                            if (window.chrome.webview.hostObjects.windowControls.IsMaximized()) {
-                                window.chrome.webview.hostObjects.windowControls.Restore();
-                                updateStatus('Window restored');
-                            } else {
-                                window.chrome.webview.hostObjects.windowControls.Maximize();
-                                updateStatus('Window maximized');
-                            }
+                            webui.api.window.toggleMaximize();
+                            updateStatus(webui.api.window.isMaximized() ? 'Window maximized' : 'Window restored');
                         }
                         
                         function closeWindow() {
-                            window.chrome.webview.hostObjects.windowControls.Close();
+                            webui.api.window.close();
                         }
                         
                         function testWindowControls() {
                             updateStatus('Testing window controls...');
                             setTimeout(() => {
-                                window.chrome.webview.hostObjects.windowControls.Minimize();
+                                webui.api.window.minimize();
                                 setTimeout(() => {
-                                    window.chrome.webview.hostObjects.windowControls.Restore();
+                                    webui.api.window.restore();
                                     updateStatus('Window controls test complete!');
                                 }, 1000);
                             }, 500);
@@ -233,13 +256,13 @@ public partial class MainForm : Form
                             const status = document.getElementById('status');
                             status.textContent = message;
                             setTimeout(() => {
-                                status.textContent = 'Drag the title bar to move the window. Uses -webkit-app-region CSS!';
+                                status.textContent = 'Try the new webui.api interface! Clean JavaScript-to-C# communication.';
                             }, 3000);
                         }
                         
                         // Initialize
                         document.addEventListener('DOMContentLoaded', () => {
-                            updateStatus('Frameless window ready! Drag the title bar to move - powered by -webkit-app-region!');
+                            updateStatus('Extension platform ready! Use webui.api for clean JavaScript-to-C# communication.');
                         });
                     </script>
                 </body>
@@ -273,13 +296,13 @@ public partial class MainForm : Form
     {
         this.SuspendLayout();
         // 
-        // MainForm
+        // WorkbenchEntry
         // 
         this.AutoScaleDimensions = new SizeF(7F, 15F);
         this.AutoScaleMode = AutoScaleMode.Font;
         this.ClientSize = new Size(284, 261);
-        this.Name = "MainForm";
-        this.Text = "WebUI";
+        this.Name = "WorkbenchEntry";
+        this.Text = "WebUI Workbench";
         this.ResumeLayout(false);
     }
 

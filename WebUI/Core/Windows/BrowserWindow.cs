@@ -202,7 +202,7 @@ public sealed class BrowserWindow : IDisposable
         if (frameless)
         {
             var windowControls = new WindowControls(_form);
-            _webViewHost.AddHostObject("windowControls", windowControls);
+            _webViewHost.AddHostObject("api", windowControls);
         }
     }
 
