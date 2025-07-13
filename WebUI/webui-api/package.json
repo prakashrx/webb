@@ -1,0 +1,25 @@
+{
+  "name": "webui-api",
+  "version": "1.0.0",
+  "description": "JavaScript API for WebUI Platform extensions",
+  "type": "module",
+  "main": "dist/webui-api.js",
+  "types": "dist/webui-api.d.ts",
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "clean": "rimraf dist"
+  },
+  "keywords": ["webui", "extensions", "api"],
+  "author": "WebUI Platform",
+  "license": "MIT",
+  "devDependencies": {
+    "@rollup/plugin-typescript": "^11.1.6",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-terser": "^0.4.4",
+    "rollup": "^4.9.6",
+    "typescript": "^5.3.3",
+    "tslib": "^2.6.2",
+    "rimraf": "^5.0.5"
+  }
+}

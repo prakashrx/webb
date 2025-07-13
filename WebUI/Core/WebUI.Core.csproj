@@ -12,5 +12,17 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
   </ItemGroup>
 
+  <!-- Build webui-api and copy dist folder -->
+  <Target Name="BuildWebUIApi" BeforeTargets="Build">
+    <Exec Command="npm run build" WorkingDirectory="..\webui-api" Condition="Exists('..\webui-api\package.json')" />
+  </Target>
+
+  <ItemGroup>
+    <Content Include="..\webui-api\dist\**\*" Condition="Exists('..\webui-api\dist')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>webui-api\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Content>
+  </ItemGroup>
+
 
 </Project>

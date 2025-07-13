@@ -186,7 +186,7 @@ public partial class WorkbenchEntry : Form
                         <div class="container">
                             <h1>🚀 WebUI Platform</h1>
                             <p>Your extension platform is ready!</p>
-                            <p>This window uses the new <code>webui.api</code> interface for clean JavaScript-to-C# communication.</p>
+                            <p>This window uses the new <code>webui</code> TypeScript API for clean JavaScript-to-C# communication.</p>
                             
                             <div>
                                 <button class="demo-button" onclick="testPanelApi()">Test Panel API</button>
@@ -195,39 +195,13 @@ public partial class WorkbenchEntry : Form
                             </div>
                             
                             <div class="status" id="status">
-                                Try the new webui.api interface! Clean JavaScript-to-C# communication.
+                                Try the new webui TypeScript API! Clean JavaScript-to-C# communication.
                             </div>
                         </div>
                     </div>
                     
                     <script>
-                        // Access the new HostApiBridge
-                        const bridge = window.chrome.webview.hostObjects.api;
-                        
-                        // Create clean WebUI Platform API
-                        window.webui = {
-                            extension: {
-                                getId: () => bridge.GetExtensionId()
-                            },
-                            panel: {
-                                registerView: (id, url) => bridge.Panel.RegisterView(id, url),
-                                open: (id) => bridge.Panel.Open(id),
-                                closePanel: (id) => bridge.Panel.ClosePanel(id),
-                                on: (eventType, handler) => bridge.Panel.On(eventType, handler.name),
-                                // Window control methods
-                                minimize: () => bridge.Panel.Minimize(),
-                                maximize: () => bridge.Panel.Maximize(),
-                                restore: () => bridge.Panel.Restore(),
-                                close: () => bridge.Panel.Close(),
-                                isMaximized: () => bridge.Panel.IsMaximized(),
-                                openDevTools: () => bridge.Panel.OpenDevTools()
-                            },
-                            ipc: {
-                                send: (type, payload) => bridge.Ipc.Send(type, JSON.stringify(payload)),
-                                on: (type, handler) => bridge.Ipc.On(type, handler.name),
-                                broadcast: (type, payload) => bridge.Ipc.Broadcast(type, JSON.stringify(payload))
-                            }
-                        };
+                        // WebUI API is automatically injected by C# and available as global webui object
                         
                         function testPanelApi() {
                             try {
@@ -303,13 +277,13 @@ public partial class WorkbenchEntry : Form
                             const status = document.getElementById('status');
                             status.textContent = message;
                             setTimeout(() => {
-                                status.textContent = 'Try the new webui.api interface! Clean JavaScript-to-C# communication.';
+                                status.textContent = 'Try the new webui TypeScript API! Clean JavaScript-to-C# communication.';
                             }, 3000);
                         }
                         
                         // Initialize
                         document.addEventListener('DOMContentLoaded', () => {
-                            updateStatus('Extension platform ready! Use webui.api for clean JavaScript-to-C# communication.');
+                            updateStatus(`Extension platform ready! WebUI API v${webui.version} loaded for extension: ${webui.extension.getId()}`);
                         });
                     </script>
                 </body>

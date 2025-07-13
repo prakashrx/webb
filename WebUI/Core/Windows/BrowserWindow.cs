@@ -115,6 +115,49 @@ public sealed class BrowserWindow : IDisposable
         var ipcTransport = new IpcTransport(extensionId);
         var apiBridge = new HostApiBridge(extensionId, ipcTransport, this);
         _webViewHost.AddHostObject("api", apiBridge);
+        
+        // Inject the WebUI API JavaScript
+        await InjectWebUIApiAsync();
+    }
+
+    /// <summary>
+    /// Inject the WebUI API JavaScript from the bundled file
+    /// </summary>
+    private async Task InjectWebUIApiAsync()
+    {
+        try
+        {
+            // Get the path to the webui-api.js file from the build output
+            var baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            var apiPath = Path.Combine(baseDirectory, "webui-api", "webui-api.js");
+            
+            if (!File.Exists(apiPath))
+            {
+                Console.WriteLine($"WebUI API file not found at: {apiPath}");
+                Console.WriteLine($"Make sure the webui-api build completed successfully.");
+                return;
+            }
+            
+            // Read the JavaScript content
+            var jsContent = await File.ReadAllTextAsync(apiPath);
+            
+            // Execute the script to make webui globally available
+            var initScript = $@"
+                {jsContent}
+                
+                // Ensure webui is globally available (the bundled code exports it)
+                if (typeof WebUIApi !== 'undefined' && WebUIApi.webui) {{
+                    window.webui = WebUIApi.webui;
+                }}
+            ";
+            
+            await _webViewHost.WebView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(initScript);
+            Console.WriteLine("WebUI API JavaScript injected successfully");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to inject WebUI API: {ex.Message}");
+        }
     }
 
     /// <summary>
