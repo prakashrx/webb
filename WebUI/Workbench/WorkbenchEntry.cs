@@ -219,7 +219,8 @@ public partial class WorkbenchEntry : Form
                                 maximize: () => bridge.Panel.Maximize(),
                                 restore: () => bridge.Panel.Restore(),
                                 close: () => bridge.Panel.Close(),
-                                isMaximized: () => bridge.Panel.IsMaximized()
+                                isMaximized: () => bridge.Panel.IsMaximized(),
+                                openDevTools: () => bridge.Panel.OpenDevTools()
                             },
                             ipc: {
                                 send: (type, payload) => bridge.Ipc.Send(type, JSON.stringify(payload)),
@@ -273,7 +274,8 @@ public partial class WorkbenchEntry : Form
                         }
                         
                         function showDevTools() {
-                            updateStatus('Press F12 or right-click -> Inspect to open dev tools');
+                            webui.panel.openDevTools();
+                            updateStatus('Developer tools opened');
                         }
 
                         // Window control functions using WebUI Panel API

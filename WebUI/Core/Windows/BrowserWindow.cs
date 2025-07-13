@@ -113,7 +113,7 @@ public sealed class BrowserWindow : IDisposable
     {
         await _initializationTask;
         var ipcTransport = new IpcTransport(extensionId);
-        var apiBridge = new HostApiBridge(extensionId, ipcTransport, _form);
+        var apiBridge = new HostApiBridge(extensionId, ipcTransport, this);
         _webViewHost.AddHostObject("api", apiBridge);
     }
 
@@ -209,13 +209,6 @@ public sealed class BrowserWindow : IDisposable
         };
 
         await _webViewHost.InitializeAsync(options);
-        
-        // Add window controls for frameless windows
-        if (frameless)
-        {
-            var windowControls = new WindowControls(_form);
-            _webViewHost.AddHostObject("api", windowControls);
-        }
     }
 
     public void Dispose()

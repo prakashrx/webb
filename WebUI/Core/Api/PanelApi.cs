@@ -1,5 +1,5 @@
 using System.Runtime.InteropServices;
-using System.Windows.Forms;
+using WebUI.Core.Windows;
 
 namespace WebUI.Core.Api;
 
@@ -10,13 +10,13 @@ public class PanelApi
     private readonly string _extensionId;
     private readonly IpcTransport _ipc;
     private readonly Dictionary<string, string> _registeredViews = new();
-    private readonly Form? _form;
+    private readonly BrowserWindow? _browserWindow;
 
-    public PanelApi(string extensionId, IpcTransport ipc, Form? form = null)
+    public PanelApi(string extensionId, IpcTransport ipc, BrowserWindow? browserWindow = null)
     {
         _extensionId = extensionId;
         _ipc = ipc;
-        _form = form;
+        _browserWindow = browserWindow;
     }
 
     public void RegisterView(string panelId, string url)
@@ -67,39 +67,35 @@ public class PanelApi
     // Window control methods for panel management
     public void Minimize()
     {
-        if (_form != null)
-        {
-            _form.WindowState = FormWindowState.Minimized;
-        }
+        _browserWindow?.Minimize();
     }
 
     public void Maximize()
     {
-        if (_form != null)
-        {
-            _form.WindowState = FormWindowState.Maximized;
-        }
+        _browserWindow?.Maximize();
     }
 
     public void Restore()
     {
-        if (_form != null)
-        {
-            _form.WindowState = FormWindowState.Normal;
-        }
+        _browserWindow?.Restore();
     }
 
     public void Close()
     {
-        if (_form != null)
-        {
-            _form.Close();
-        }
+        _browserWindow?.Close();
     }
 
     public bool IsMaximized()
     {
-        return _form?.WindowState == FormWindowState.Maximized;
+        return _browserWindow?.Form.WindowState == System.Windows.Forms.FormWindowState.Maximized;
+    }
+
+    public void OpenDevTools()
+    {
+        if (_browserWindow?.WebView?.CoreWebView2 != null)
+        {
+            _browserWindow.WebView.CoreWebView2.OpenDevToolsWindow();
+        }
     }
 
     private void InvokeJavaScriptHandler(string handlerName, string payload)

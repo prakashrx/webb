@@ -1,5 +1,5 @@
 using System.Runtime.InteropServices;
-using System.Windows.Forms;
+using WebUI.Core.Windows;
 
 namespace WebUI.Core.Api;
 
@@ -13,11 +13,11 @@ public class HostApiBridge
     public PanelApi Panel { get; }
     public IpcApi Ipc { get; }
 
-    public HostApiBridge(string extensionId, IpcTransport ipcTransport, Form? form = null)
+    public HostApiBridge(string extensionId, IpcTransport ipcTransport, BrowserWindow? browserWindow = null)
     {
         _extensionId = extensionId;
         _ipcTransport = ipcTransport;
-        Panel = new PanelApi(extensionId, ipcTransport, form);
+        Panel = new PanelApi(extensionId, ipcTransport, browserWindow);
         Ipc = new IpcApi(extensionId, ipcTransport);
     }
 
