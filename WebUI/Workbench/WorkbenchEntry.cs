@@ -25,6 +25,9 @@ public partial class WorkbenchEntry : Form
             // Create a simple browser window demo with frameless window
             _browserWindow = new BrowserWindow("WebUI Demo", 1000, 700, resizable: true, devTools: true, frameless: true);
             
+            // Add the new WebUI API bridge
+            await _browserWindow.AddWebUIApiAsync("workbench");
+            
             // Load a demo page with custom title bar
             await _browserWindow.LoadHtmlAsync("""
                 <html>
@@ -186,9 +189,9 @@ public partial class WorkbenchEntry : Form
                             <p>This window uses the new <code>webui.api</code> interface for clean JavaScript-to-C# communication.</p>
                             
                             <div>
-                                <button class="demo-button" onclick="testWindowControls()">Test Window Controls</button>
+                                <button class="demo-button" onclick="testPanelApi()">Test Panel API</button>
+                                <button class="demo-button" onclick="testIpcApi()">Test IPC API</button>
                                 <button class="demo-button" onclick="showDevTools()">Open Dev Tools</button>
-                                <button class="demo-button" onclick="testMessage()">Test Message</button>
                             </div>
                             
                             <div class="status" id="status">
@@ -198,58 +201,100 @@ public partial class WorkbenchEntry : Form
                     </div>
                     
                     <script>
-                        // Create WebUI Platform API
+                        // Access the new HostApiBridge
+                        const bridge = window.chrome.webview.hostObjects.api;
+                        
+                        // Create clean WebUI Platform API
                         window.webui = {
-                            api: {
-                                window: {
-                                    minimize: () => window.chrome.webview.hostObjects.api.Minimize(),
-                                    maximize: () => window.chrome.webview.hostObjects.api.Maximize(),
-                                    restore: () => window.chrome.webview.hostObjects.api.Restore(),
-                                    close: () => window.chrome.webview.hostObjects.api.Close(),
-                                    isMaximized: () => window.chrome.webview.hostObjects.api.IsMaximized(),
-                                    toggleMaximize: () => {
-                                        if (webui.api.window.isMaximized()) {
-                                            webui.api.window.restore();
-                                        } else {
-                                            webui.api.window.maximize();
-                                        }
-                                    }
-                                }
+                            extension: {
+                                getId: () => bridge.GetExtensionId()
+                            },
+                            panel: {
+                                registerView: (id, url) => bridge.Panel.RegisterView(id, url),
+                                open: (id) => bridge.Panel.Open(id),
+                                closePanel: (id) => bridge.Panel.ClosePanel(id),
+                                on: (eventType, handler) => bridge.Panel.On(eventType, handler.name),
+                                // Window control methods
+                                minimize: () => bridge.Panel.Minimize(),
+                                maximize: () => bridge.Panel.Maximize(),
+                                restore: () => bridge.Panel.Restore(),
+                                close: () => bridge.Panel.Close(),
+                                isMaximized: () => bridge.Panel.IsMaximized()
+                            },
+                            ipc: {
+                                send: (type, payload) => bridge.Ipc.Send(type, JSON.stringify(payload)),
+                                on: (type, handler) => bridge.Ipc.On(type, handler.name),
+                                broadcast: (type, payload) => bridge.Ipc.Broadcast(type, JSON.stringify(payload))
                             }
                         };
                         
-                        function minimizeWindow() {
-                            webui.api.window.minimize();
-                            updateStatus('Window minimized');
-                        }
-                        
-                        function toggleMaximize() {
-                            webui.api.window.toggleMaximize();
-                            updateStatus(webui.api.window.isMaximized() ? 'Window maximized' : 'Window restored');
-                        }
-                        
-                        function closeWindow() {
-                            webui.api.window.close();
-                        }
-                        
-                        function testWindowControls() {
-                            updateStatus('Testing window controls...');
-                            setTimeout(() => {
-                                webui.api.window.minimize();
+                        function testPanelApi() {
+                            try {
+                                updateStatus('Testing Panel API...');
+                                
+                                // Test panel registration
+                                webui.panel.registerView('test-panel', 'about:blank');
+                                updateStatus('Panel API test: registerView() completed');
+                                
+                                // Test panel opening (would create panel in future)
                                 setTimeout(() => {
-                                    webui.api.window.restore();
-                                    updateStatus('Window controls test complete!');
-                                }, 1000);
-                            }, 500);
+                                    webui.panel.open('test-panel');
+                                    updateStatus('Panel API test: open() completed');
+                                }, 500);
+                                
+                            } catch (error) {
+                                updateStatus('Panel API Error: ' + error.message);
+                            }
+                        }
+                        
+                        function testIpcApi() {
+                            try {
+                                updateStatus('Testing IPC API...');
+                                
+                                // Test message sending
+                                webui.ipc.send('test.message', { 
+                                    content: 'Hello from WebUI!',
+                                    timestamp: new Date().toISOString()
+                                });
+                                updateStatus('IPC API test: send() completed');
+                                
+                                // Test broadcast
+                                setTimeout(() => {
+                                    webui.ipc.broadcast('test.broadcast', { 
+                                        message: 'Broadcast test',
+                                        from: webui.extension.getId()
+                                    });
+                                    updateStatus('IPC API test: broadcast() completed');
+                                }, 500);
+                                
+                            } catch (error) {
+                                updateStatus('IPC API Error: ' + error.message);
+                            }
                         }
                         
                         function showDevTools() {
                             updateStatus('Press F12 or right-click -> Inspect to open dev tools');
                         }
+
+                        // Window control functions using WebUI Panel API
+                        function minimizeWindow() {
+                            webui.panel.minimize();
+                        }
+
+                        let isWindowMaximized = false;
                         
-                        function testMessage() {
-                            window.chrome.webview.postMessage('Hello from JavaScript!');
-                            updateStatus('Message sent to host application');
+                        function toggleMaximize() {
+                            if (isWindowMaximized) {
+                                webui.panel.restore();
+                                isWindowMaximized = false;
+                            } else {
+                                webui.panel.maximize();
+                                isWindowMaximized = true;
+                            }
+                        }
+
+                        function closeWindow() {
+                            webui.panel.close();
                         }
                         
                         function updateStatus(message) {

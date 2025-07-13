@@ -1,6 +1,7 @@
 using System.Drawing;
 using System.Windows.Forms;
 using Microsoft.Web.WebView2.Core;
+using WebUI.Core.Api;
 
 namespace WebUI.Core.Windows;
 
@@ -52,7 +53,7 @@ public sealed class BrowserWindow : IDisposable
             Width = width,
             Height = height,
             FormBorderStyle = frameless ? FormBorderStyle.None : (resizable ? FormBorderStyle.Sizable : FormBorderStyle.FixedSingle),
-            MaximizeBox = resizable && !frameless,
+            MaximizeBox = resizable,
             StartPosition = FormStartPosition.CenterScreen
         };
 
@@ -103,6 +104,17 @@ public sealed class BrowserWindow : IDisposable
     {
         await _initializationTask;
         _webViewHost.AddHostObject(name, hostObject);
+    }
+
+    /// <summary>
+    /// Add the WebUI API bridge for extension support
+    /// </summary>
+    public async Task AddWebUIApiAsync(string extensionId = "workbench")
+    {
+        await _initializationTask;
+        var ipcTransport = new IpcTransport(extensionId);
+        var apiBridge = new HostApiBridge(extensionId, ipcTransport, _form);
+        _webViewHost.AddHostObject("api", apiBridge);
     }
 
     /// <summary>
