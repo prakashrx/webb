@@ -1,13 +1,46 @@
 # WebUI Platform - Architecture Vision
 
-## Core Principles
+## Current State (January 2025)
+
+### What We Have Built
+- **Core Framework** (`WebUI.Core`):
+  - `Screen` abstraction that combines BrowserWindow + WebUI API + IPC
+  - `ScreenManager` for managing multiple screens
+  - WebUI API injection via `AddScriptToExecuteOnDocumentCreatedAsync`
+  - Virtual host mapping for serving UI assets
+  - Clean, reusable infrastructure for any WebView2-based application
+
+- **Workbench Application** (`WebUI.Workbench`):
+  - Uses Core framework to create application screens
+  - Built-in UI components (toolbar, settings) in `src/UI/workbench/`
+  - Multi-screen support with message routing
+  - No more "everything is an extension" - clear separation
+
+- **Directory Structure**:
+  ```
+  src/
+  ├── Platform/
+  │   ├── Core/          # Framework (Screens, Hosting, Communication, API)
+  │   └── Workbench/     # Application using the framework
+  └── UI/
+      ├── workbench/     # Workbench UI components
+      └── api/           # WebUI JavaScript API
+  ```
+
+### Architecture Achievements
+1. **Clean Abstraction**: Creating a screen is now just a few lines of code
+2. **Automatic API Injection**: WebUI API available in all screens
+3. **Proper Separation**: Core framework vs Application vs UI
+4. **Multi-Screen Support**: Easy to create and manage multiple windows
+
+## Future Vision
 
 ### 1. **Clear Separation: Core UI vs Extensions**
 - **Core UI**: Built-in Svelte/Tailwind components that provide the application shell
-  - Main toolbar (app branding, menus, window controls)
-  - Settings screen (native preferences UI)
-  - Panel containers (chrome/titlebar around extension content)
-  - Context menus (can overflow window bounds)
+  - Main toolbar (app branding, menus, window controls) ✅ Done
+  - Settings screen (native preferences UI) ✅ Done
+  - Panel containers (chrome/titlebar around extension content) 🔄 Next
+  - Context menus (can overflow window bounds) 📋 Future
   
 - **Extensions**: External plugins that run INSIDE panel containers
   - Provide content, not chrome
@@ -155,8 +188,57 @@ WebUI/
 
 ## Next Steps
 
-1. Update CLAUDE.md with this vision
-2. Restructure the codebase
-3. Build core UI components
-4. Enhance WebUI API
-5. Simplify extension system
+### Immediate (What We're Building Next)
+
+1. **Panel Container System**
+   - Create `PanelContainer.svelte` in workbench UI
+   - Provides chrome (titlebar, tabs, resize handles)
+   - Hosts extension content in iframes
+   - Manages panel state (docked, floating, minimized)
+
+2. **Workspace Screen**
+   - Main application workspace that hosts panel containers
+   - Golden Layout or similar for docking/splitting
+   - Persists layout to JSON
+   - Manages panel lifecycle
+
+3. **Enhanced WebUI API**
+   - Add `webui.contextMenu` for native menus
+   - Add `webui.dialog` for file/folder selection
+   - Add `webui.notification` for system notifications
+   - Different API surface for core UI vs extensions
+
+4. **Extension System (Simplified)**
+   - Extensions are just web apps served over HTTP
+   - Manifest defines contributions (commands, menus, settings)
+   - Extensions run in iframes with scoped API access
+   - No more complex loading - just iframe with URL
+
+### Code Example of Target State
+
+```typescript
+// In Workbench UI (full access)
+import { webui } from '@webui/api';
+
+// Create context menu
+webui.contextMenu.show([
+  { label: 'Cut', command: 'edit.cut' },
+  { label: 'Copy', command: 'edit.copy' },
+  { label: 'Paste', command: 'edit.paste' }
+], { x: 100, y: 200 });
+
+// In Extension (scoped access)
+webui.panel.setTitle('My Data Grid');
+webui.commands.register('myext.refresh', async () => {
+  const data = await fetchData();
+  updateGrid(data);
+});
+```
+
+### Architecture Principles Moving Forward
+
+1. **Core UI is Sacred**: Only built-in components can modify the shell
+2. **Extensions are Guests**: They run in sandboxed iframes with limited API
+3. **Native Feel**: Use OS capabilities (context menus, dialogs) not web replacements
+4. **Performance First**: Direct COM bridge for core, message passing for extensions
+5. **Developer Joy**: Hot reload everywhere, clear APIs, good docs

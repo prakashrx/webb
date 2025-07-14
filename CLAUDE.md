@@ -63,20 +63,28 @@ The platform has a clear separation between core UI and extensions:
 
 ## Current Implementation Status
 
-### ✅ Completed (MVP Foundation)
+### ✅ Completed
 - **WebView2 Infrastructure**: BrowserWindow and WebViewHost with proper initialization, events, and lifecycle management
-- **Extension Loading System**: Direct HTML generation with virtual host mapping for core extensions
+- **Screen Abstraction**: IScreen, Screen, ScreenOptions, and ScreenManager for managing multiple WebView2 windows
 - **COM API Bridge**: HostApiBridge, PanelApi, and IpcApi for JavaScript ↔ C# communication  
 - **WebUI JavaScript API**: Complete TypeScript API (`webui.panel`, `webui.ipc`, `webui.extension`) with bundled distribution
-- **Core Extension Framework**: Svelte-based core extension with MainToolbar and Settings panels
-- **Working Demo**: Functional main-toolbar extension loading with panel registration and mounting
+- **Workbench UI**: Svelte-based UI components (MainToolbar, Settings) that run as built-in parts of the Workbench
+- **Working Application**: Functional multi-screen application with toolbar, settings, and workspace screens
 
-### 🔄 Current MVP State
-- Workbench creates frameless browser window (1200x40) for main toolbar
-- Loads `extension://core/main-toolbar` which generates HTML and mounts Svelte components
-- WebUI API injected globally for extension communication
-- Core extension registers panels via `webui.panel.registerPanel()`
-- Virtual host mapping serves extension assets from local filesystem
+### 🔄 Current Architecture
+- **Core Framework** (`WebUI.Core`):
+  - Provides Screen abstraction for creating/managing WebView2 windows
+  - Handles WebUI API injection via `AddScriptToExecuteOnDocumentCreatedAsync`
+  - Virtual host mapping for serving UI assets
+  - IPC infrastructure for communication
+- **Workbench Application** (`WebUI.Workbench`):
+  - Uses Core framework to create application screens
+  - Workbench UI components are built-in (not extensions)
+  - Manages screen lifecycle and inter-screen communication
+- **UI Structure**:
+  - `src/UI/workbench/` - Contains Workbench UI components
+  - `src/UI/api/` - WebUI JavaScript API library
+  - Clear separation between platform and application UI
 
 ## Development Guidelines
 

@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <ItemGroup>
+      <ProjectReference Include="..\Core\WebUI.Core.csproj" />
+    </ItemGroup>
+
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net9.0-windows</TargetFramework>
+        <Nullable>enable</Nullable>
+        <UseWindowsForms>true</UseWindowsForms>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+    <!-- Build workbench UI -->
+    <Target Name="BuildWorkbenchUI" BeforeTargets="Build">
+      <Exec Command="npm run build" WorkingDirectory="..\..\UI\workbench" Condition="Exists('..\..\UI\workbench\package.json')" />
+    </Target>
+
+    <ItemGroup>
+      <!-- Workbench UI - built output only -->
+      <Content Include="..\..\UI\workbench\dist\**\*" Condition="Exists('..\..\UI\workbench\dist')">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <Link>ui\workbench\dist\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      </Content>
+    </ItemGroup>
+
+</Project>

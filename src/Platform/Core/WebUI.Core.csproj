@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2783.20" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
+  </ItemGroup>
+
+  <!-- Build webui-api only (Core doesn't need UI) -->
+  <Target Name="BuildWebUIApi" BeforeTargets="Build">
+    <Exec Command="npm run build" WorkingDirectory="..\..\UI\api" Condition="Exists('..\..\UI\api\package.json')" />
+  </Target>
+
+  <ItemGroup>
+    <Content Include="..\..\UI\api\dist\**\*" Condition="Exists('..\..\UI\api\dist')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>webui-api\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Content>
+  </ItemGroup>
+
+
+</Project>
