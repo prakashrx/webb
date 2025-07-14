@@ -67,17 +67,26 @@ public class PanelApi
     // Window control methods for panel management
     public void Minimize()
     {
-        _browserWindow?.Minimize();
+        if (_browserWindow != null)
+        {
+            _browserWindow.WindowState = System.Windows.Forms.FormWindowState.Minimized;
+        }
     }
 
     public void Maximize()
     {
-        _browserWindow?.Maximize();
+        if (_browserWindow != null)
+        {
+            _browserWindow.WindowState = System.Windows.Forms.FormWindowState.Maximized;
+        }
     }
 
     public void Restore()
     {
-        _browserWindow?.Restore();
+        if (_browserWindow != null)
+        {
+            _browserWindow.WindowState = System.Windows.Forms.FormWindowState.Normal;
+        }
     }
 
     public void Close()

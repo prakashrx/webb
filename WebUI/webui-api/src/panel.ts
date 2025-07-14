@@ -130,6 +130,37 @@ export class PanelManager {
     const bridge = getBridge();
     bridge.Panel.OpenDevTools();
   }
+
+  /**
+   * Mount a registered panel component to a container element
+   * This is used internally by the platform when loading component-based panels
+   */
+  public mountPanel(panelId: string, containerId: string): void {
+    const panels = (window as any).__webuiPanels;
+    if (!panels || !panels.has(panelId)) {
+      throw new Error(`Panel '${panelId}' not registered. Did you call registerPanel() in your extension's activate function?`);
+    }
+
+    const container = document.getElementById(containerId);
+    if (!container) {
+      throw new Error(`Container element '${containerId}' not found`);
+    }
+
+    const Component = panels.get(panelId);
+    try {
+      // Mount as Svelte component
+      new Component({
+        target: container,
+        props: {
+          // Pass extension context if needed in future
+        }
+      });
+      console.log(`Panel '${panelId}' mounted successfully`);
+    } catch (error) {
+      console.error(`Failed to mount panel '${panelId}':`, error);
+      throw error;
+    }
+  }
 }
 
 // Export singleton instance

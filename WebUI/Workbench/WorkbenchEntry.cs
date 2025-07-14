@@ -1,11 +1,11 @@
 using System.Windows.Forms;
-using WebUI.Core.Windows;
+using WebUI.Core.Extensions;
 
 namespace WebUI.Workbench;
 
 public partial class WorkbenchEntry : Form
 {
-    private BrowserWindow? _browserWindow;
+    private ExtensionHost? _extensionHost;
 
     public WorkbenchEntry()
     {
@@ -22,30 +22,27 @@ public partial class WorkbenchEntry : Form
             this.ShowInTaskbar = false;
             this.Visible = false;
             
-            // Create a simple browser window demo with frameless window
-            _browserWindow = new BrowserWindow("WebUI Platform", 1200, 40, resizable: true, devTools: true, frameless: true);
-            
-            // Add the new WebUI API bridge
-            await _browserWindow.AddWebUIApiAsync("workbench");
+            // Create an extension host with a frameless window for the main toolbar
+            _extensionHost = ExtensionHostFactory.CreateFrameless("WebUI Platform", 1200, 40);
             
             // Load the core main toolbar extension
-            await _browserWindow.LoadHtmlAsync("extension://core/main-toolbar");
+            await _extensionHost.LoadExtensionAsync("extension://core/main-toolbar");
             
             // Handle messages from JavaScript
-            _browserWindow.MessageReceived += (sender, message) =>
+            _extensionHost.Window.MessageReceived += (sender, message) =>
             {
                 Console.WriteLine($"Received message: {message}");
             };
             
             // Handle browser window closing
-            _browserWindow.Closed += (sender, e) =>
+            _extensionHost.Window.Closed += (sender, e) =>
             {
                 // Close the application when the browser window closes
                 Application.Exit();
             };
             
             // Show the browser window
-            _browserWindow.Show();
+            _extensionHost.Window.Show();
         }
         catch (Exception ex)
         {
@@ -72,7 +69,7 @@ public partial class WorkbenchEntry : Form
     {
         if (disposing)
         {
-            _browserWindow?.Dispose();
+            _extensionHost?.Dispose();
         }
         base.Dispose(disposing);
     }

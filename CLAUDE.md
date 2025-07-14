@@ -41,24 +41,25 @@ npm run build
 
 ### Core Components
 - **Workbench** (`WebUI.Workbench`): Main application entry point and window lifecycle management
-- **Core** (`WebUI.Core`): Platform libraries for WebView2, window management, and extension APIs
-- **Core Extensions** (`WebUI/extensions/core`): Built-in UI components (main-toolbar, settings) as Svelte components
-- **WebUI API** (`WebUI/webui-api`): TypeScript API library providing `webui.panel` and `webui.ipc` namespaces
+- **Core** (`WebUI.Core`): Platform libraries for WebView2, window management, and native OS integration
+- **Core UI** (`WebUI/ui/core`): Built-in Svelte/Tailwind UI components (toolbar, settings, panel containers)
+- **Extensions** (`WebUI/extensions`): External plugins that run inside panel containers
+- **WebUI API** (`WebUI/webui-api`): TypeScript API library providing native UI capabilities
 
 ### Key Classes  
-- **WorkbenchEntry** (`WebUI.Workbench/WorkbenchEntry.cs:26`): Creates frameless main toolbar window and loads core extension
-- **BrowserWindow** (`WebUI.Core/Windows/BrowserWindow.cs`): Tauri-inspired WebView2 wrapper with extension support
+- **WorkbenchEntry** (`WebUI.Workbench/WorkbenchEntry.cs`): Creates main application window and initializes core UI
+- **BrowserWindow** (`WebUI.Core/Windows/BrowserWindow.cs`): Clean WebView2 wrapper (no extension knowledge)
 - **WebViewHost** (`WebUI.Core/Windows/WebViewHost.cs`): WebView2 hosting infrastructure with COM integration
-- **HostApiBridge** (`WebUI.Core/Api/HostApiBridge.cs`): Main COM bridge exposing Panel and IPC APIs to JavaScript
-- **PanelApi** (`WebUI.Core/Api/PanelApi.cs`): Panel registration, lifecycle, and window control methods
+- **ExtensionHost** (`WebUI.Core/Extensions/ExtensionHost.cs`): Manages extension loading and lifecycle
+- **HostApiBridge** (`WebUI.Core/Api/HostApiBridge.cs`): COM bridge exposing native APIs to JavaScript
 
-### Extension System (Current Implementation)
-The platform follows an "everything is an extension" architecture:
-- **Core Extensions**: Built-in Svelte components loaded via `extension://` URLs (main-toolbar, settings)
-- **Extension Registration**: Components register via `webui.panel.registerPanel(id, SvelteComponent)`
-- **Virtual Host Mapping**: Extensions served from filesystem at `http://webui.local/extensionId/`
-- **HTML Generation**: Dynamic HTML creation with module imports and component mounting
-- **JavaScript API**: Global `webui` object with `panel`, `ipc`, and `extension` namespaces
+### UI Architecture
+The platform has a clear separation between core UI and extensions:
+- **Core UI**: Built-in application shell (toolbar, settings, panel containers) using Svelte/Tailwind
+- **Extensions**: External code that runs inside panel containers, isolated from core UI
+- **Panel System**: Extensions render content inside panels with native chrome (title bar, tabs, etc.)
+- **WebUI API**: Provides native UI patterns (context menus, dialogs, notifications) to both core and extensions
+- **Extension Contributions**: Extensions can contribute commands, menus, settings via API
 
 ## Current Implementation Status
 
@@ -92,6 +93,11 @@ The platform follows an "everything is an extension" architecture:
 - Panel isolation via iframes with extension identity in query params
 - Clean separation between platform APIs and extension code
 
+## Project Architecture Considerations
+
+### Framework Foundation Considerations
+- Before thinking about extension we need a solid webUI foundation with ability to load multiple web UI screens. This foundation needs to be present in the core framework. The workbench uses the core framework to provide all our web UI screens.
+
 ## Testing and Validation
 
 ### Current Demo
@@ -105,12 +111,23 @@ Launches frameless browser window (1200x40) with main-toolbar extension. Demonst
 - WebUI API injection and global availability
 - Window controls (minimize, maximize, close) from JavaScript
 
-### Next Steps for MVP Improvement
-- Clean up HTML generation and component mounting logic
-- Implement proper IPC message handling (currently stubs)
-- Add error handling and debugging for extension loading
-- Standardize extension manifest processing
-- Add support for dynamic panel layouts
+### Architecture Refactor Plan
+
+**New Vision:**
+1. **Core UI is NOT Extensions** - Toolbar, settings, panel containers are built-in Svelte components
+2. **Extensions Run IN Panels** - Extensions provide content, not chrome/containers
+3. **Native UI Patterns** - WebUI API provides context menus, dialogs that feel native
+4. **Clean Separation** - Core UI has full platform access, extensions are sandboxed
+
+**Implementation Steps:**
+1. **Restructure UI Code** - Move toolbar/settings from extensions/ to ui/core/
+2. **Create Panel Container** - Core UI component that hosts extension content
+3. **Enhance WebUI API** - Add native UI capabilities (context menus, file dialogs, etc.)
+4. **Simplify Extension Loading** - Extensions just mount content, no chrome responsibility
+5. **Implement IPC Router** - Message passing between extensions and core
+6. **Add Dev Mode** - Hot reload for both core UI and extensions
+
+**Goal**: VS Code-like architecture where core UI provides the shell and extensions add functionality within that shell.
 
 ## Key Files and Locations
 
@@ -131,12 +148,12 @@ Launches frameless browser window (1200x40) with main-toolbar extension. Demonst
 
 ## Architecture Principles
 
-1. **Extension-First**: Platform UI built from core extensions
-2. **HTTP-Served Extensions**: User extensions served from development servers
-3. **Iframe Isolation**: User panels run in isolated iframes  
-4. **Central IPC Routing**: All communication flows through workbench
-5. **Clean API Surface**: Simple `webui.panel` and `webui.ipc` namespaces
-6. **Modern Development**: Vite + Svelte + TypeScript for extensions
+1. **Clear UI Separation**: Core UI (toolbar, settings, panel chrome) is built-in, not extensions
+2. **Extension Isolation**: Extensions run inside panel containers, can't modify core UI directly
+3. **Native UI Patterns**: WebUI API enables native-feeling UIs (context menus, dialogs, etc.)
+4. **HTTP-Served Extensions**: User extensions served from development servers for hot reload
+5. **Central IPC Routing**: All extension communication flows through the workbench
+6. **Modern Development**: Vite + Svelte + TypeScript for both core UI and extensions
 
 ## Common Patterns
 
