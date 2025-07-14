@@ -16,6 +16,18 @@ export class PanelManager {
   }
 
   /**
+   * Register a Svelte component as a panel (convenience wrapper)
+   */
+  public registerPanel(id: string, component: any): void {
+    // Store the component for later mounting
+    (window as any).__webuiPanels = (window as any).__webuiPanels || new Map();
+    (window as any).__webuiPanels.set(id, component);
+    
+    // Register with a special URL that indicates this is a component panel
+    this.registerView(id, `component://${id}`);
+  }
+
+  /**
    * Open a registered panel
    */
   public open(id: string): void {

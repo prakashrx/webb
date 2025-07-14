@@ -40,39 +40,42 @@ npm run build
 ## Architecture Overview
 
 ### Core Components
-- **Workbench**: Main application process and extension coordinator (WebUI.Workbench)
-- **Core**: Platform libraries for WebView2 and window management (WebUI.Core) 
-- **Shared**: API contracts and models for extension system (WebUI.Shared)
-- **UIComponents**: Svelte component library for web-based UI (planned)
+- **Workbench** (`WebUI.Workbench`): Main application entry point and window lifecycle management
+- **Core** (`WebUI.Core`): Platform libraries for WebView2, window management, and extension APIs
+- **Core Extensions** (`WebUI/extensions/core`): Built-in UI components (main-toolbar, settings) as Svelte components
+- **WebUI API** (`WebUI/webui-api`): TypeScript API library providing `webui.panel` and `webui.ipc` namespaces
 
-### Key Classes
-- **BrowserWindow** (`WebUI.Core/Windows/BrowserWindow.cs`): Tauri-inspired WebView2 wrapper
-- **WebViewHost** (`WebUI.Core/Windows/WebViewHost.cs`): WebView2 hosting infrastructure
-- **WorkbenchEntry** (`WebUI.Workbench/WorkbenchEntry.cs`): Main application form and lifecycle
-- **WindowControls** (`WebUI.Core/Windows/WindowControls.cs`): COM object for JS window controls
+### Key Classes  
+- **WorkbenchEntry** (`WebUI.Workbench/WorkbenchEntry.cs:26`): Creates frameless main toolbar window and loads core extension
+- **BrowserWindow** (`WebUI.Core/Windows/BrowserWindow.cs`): Tauri-inspired WebView2 wrapper with extension support
+- **WebViewHost** (`WebUI.Core/Windows/WebViewHost.cs`): WebView2 hosting infrastructure with COM integration
+- **HostApiBridge** (`WebUI.Core/Api/HostApiBridge.cs`): Main COM bridge exposing Panel and IPC APIs to JavaScript
+- **PanelApi** (`WebUI.Core/Api/PanelApi.cs`): Panel registration, lifecycle, and window control methods
 
-### Extension System (Planned)
+### Extension System (Current Implementation)
 The platform follows an "everything is an extension" architecture:
-- **Core Extensions**: Platform UI (toolbar, panel chrome) implemented as extensions
-- **User Extensions**: Loaded from HTTP with live reload for development
-- **IPC Communication**: Named pipe routing between processes and extensions  
-- **JavaScript API**: Clean `webui.panel` and `webui.ipc` namespaces
+- **Core Extensions**: Built-in Svelte components loaded via `extension://` URLs (main-toolbar, settings)
+- **Extension Registration**: Components register via `webui.panel.registerPanel(id, SvelteComponent)`
+- **Virtual Host Mapping**: Extensions served from filesystem at `http://webui.local/extensionId/`
+- **HTML Generation**: Dynamic HTML creation with module imports and component mounting
+- **JavaScript API**: Global `webui` object with `panel`, `ipc`, and `extension` namespaces
 
 ## Current Implementation Status
 
-### ✅ Completed
-- WebView2 hosting with BrowserWindow API
-- Window management and controls
-- COM interop patterns (WindowControls)
-- Basic project structure and build system
-- API contracts defined in Shared project
+### ✅ Completed (MVP Foundation)
+- **WebView2 Infrastructure**: BrowserWindow and WebViewHost with proper initialization, events, and lifecycle management
+- **Extension Loading System**: Direct HTML generation with virtual host mapping for core extensions
+- **COM API Bridge**: HostApiBridge, PanelApi, and IpcApi for JavaScript ↔ C# communication  
+- **WebUI JavaScript API**: Complete TypeScript API (`webui.panel`, `webui.ipc`, `webui.extension`) with bundled distribution
+- **Core Extension Framework**: Svelte-based core extension with MainToolbar and Settings panels
+- **Working Demo**: Functional main-toolbar extension loading with panel registration and mounting
 
-### 🔄 Next Phase (POC Implementation)
-- HostApiBridge COM interface for extension API
-- Extension loading system (core + HTTP-based)
-- Core extensions (panel-container, main-toolbar)
-- IPC transport with named pipes
-- Test extension with Svelte + Vite
+### 🔄 Current MVP State
+- Workbench creates frameless browser window (1200x40) for main toolbar
+- Loads `extension://core/main-toolbar` which generates HTML and mounts Svelte components
+- WebUI API injected globally for extension communication
+- Core extension registers panels via `webui.panel.registerPanel()`
+- Virtual host mapping serves extension assets from local filesystem
 
 ## Development Guidelines
 
@@ -96,13 +99,18 @@ The platform follows an "everything is an extension" architecture:
 cd WebUI/Workbench
 dotnet run
 ```
-Launches WebView2 window with custom title bar demonstrating JavaScript ↔ C# communication.
+Launches frameless browser window (1200x40) with main-toolbar extension. Demonstrates:
+- Extension loading via `extension://core/main-toolbar` 
+- Svelte component registration and mounting
+- WebUI API injection and global availability
+- Window controls (minimize, maximize, close) from JavaScript
 
-### POC Validation (Planned)
-- Load core extensions (panel-container, main-toolbar)
-- Load test extension from `http://localhost:3001`
-- Verify iframe isolation and IPC communication
-- Test extension lifecycle events and error handling
+### Next Steps for MVP Improvement
+- Clean up HTML generation and component mounting logic
+- Implement proper IPC message handling (currently stubs)
+- Add error handling and debugging for extension loading
+- Standardize extension manifest processing
+- Add support for dynamic panel layouts
 
 ## Key Files and Locations
 

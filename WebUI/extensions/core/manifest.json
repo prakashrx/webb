@@ -1,0 +1,20 @@
+{
+  "id": "core",
+  "displayName": "WebUI Core",
+  "version": "1.0.0",
+  "description": "Core UI components for WebUI Platform",
+  "main": "dist/activate.js",
+  "type": "core",
+  "panels": [
+    {
+      "id": "main-toolbar",
+      "title": "Main Toolbar",
+      "component": "dist/main-toolbar.js"
+    },
+    {
+      "id": "settings", 
+      "title": "Settings",
+      "component": "dist/settings.js"
+    }
+  ]
+}
