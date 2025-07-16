@@ -1,0 +1,18 @@
+<Project>
+  <!-- WebUI build pipeline -->
+  <PropertyGroup>
+    <WebUIDevMode Condition="'$(Configuration)' == 'Debug'">true</WebUIDevMode>
+    <WebUIDevMode Condition="'$(Configuration)' != 'Debug'">false</WebUIDevMode>
+  </PropertyGroup>
+
+  <Target Name="CompileSveltePanels" BeforeTargets="BeforeBuild">
+    <Message Text="🚀 WebUI: Compiling Svelte panels..." Importance="high" />
+    <Message Text="📁 Dev Mode: $(WebUIDevMode)" Importance="high" />
+    <Message Text="🔍 Found panels: @(SveltePanel)" Importance="normal" />
+    
+    <!-- For now, just copy files to output -->
+    <Copy SourceFiles="@(SveltePanel)" 
+          DestinationFolder="$(OutputPath)" 
+          SkipUnchangedFiles="true" />
+  </Target>
+</Project>
