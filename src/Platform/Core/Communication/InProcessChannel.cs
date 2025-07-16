@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using System.Text.RegularExpressions;
 
 namespace WebUI.Core.Communication;
 
@@ -9,6 +8,7 @@ namespace WebUI.Core.Communication;
 /// </summary>
 public class InProcessChannel : IMessageChannel
 {
+    // Simple dictionary: target address -> handlers for that address
     private readonly ConcurrentDictionary<string, List<Func<ChannelMessage, Task>>> _handlers = new();
     private readonly object _handlersLock = new();
     private bool _disposed;
@@ -24,13 +24,29 @@ public class InProcessChannel : IMessageChannel
         
         Console.WriteLine($"[InProcessChannel] Sending message - Type: {message.Type}, Source: {message.Source}, Target: {message.Target}");
         
-        // Get all matching handlers
-        var handlers = GetMatchingHandlers(message);
+        var handlersToExecute = new List<Func<ChannelMessage, Task>>();
         
-        Console.WriteLine($"[InProcessChannel] Found {handlers.Count} matching handlers");
+        lock (_handlersLock)
+        {
+            // If it's a broadcast message, send to all handlers
+            if (message.Target == "*" || string.IsNullOrEmpty(message.Target))
+            {
+                foreach (var handlerList in _handlers.Values)
+                {
+                    handlersToExecute.AddRange(handlerList);
+                }
+            }
+            // Otherwise, send only to the specific target
+            else if (_handlers.TryGetValue(message.Target, out var targetHandlers))
+            {
+                handlersToExecute.AddRange(targetHandlers);
+            }
+        }
+        
+        Console.WriteLine($"[InProcessChannel] Found {handlersToExecute.Count} matching handlers");
         
         // Execute handlers
-        var tasks = handlers.Select(async handler =>
+        var tasks = handlersToExecute.Select(async handler =>
         {
             try
             {
@@ -49,18 +65,18 @@ public class InProcessChannel : IMessageChannel
         MessageReceived?.Invoke(this, message);
     }
     
-    public IDisposable Subscribe(string pattern, Func<ChannelMessage, Task> handler)
+    public IDisposable Subscribe(string address, Func<ChannelMessage, Task> handler)
     {
         if (_disposed) throw new ObjectDisposedException(nameof(InProcessChannel));
         
-        Console.WriteLine($"[InProcessChannel] Subscribing to pattern: {pattern}");
+        Console.WriteLine($"[InProcessChannel] Subscribing to address: {address}");
         
         lock (_handlersLock)
         {
-            if (!_handlers.TryGetValue(pattern, out var handlers))
+            if (!_handlers.TryGetValue(address, out var handlers))
             {
                 handlers = new List<Func<ChannelMessage, Task>>();
-                _handlers[pattern] = handlers;
+                _handlers[address] = handlers;
             }
             handlers.Add(handler);
         }
@@ -70,81 +86,16 @@ public class InProcessChannel : IMessageChannel
         {
             lock (_handlersLock)
             {
-                if (_handlers.TryGetValue(pattern, out var handlers))
+                if (_handlers.TryGetValue(address, out var handlers))
                 {
                     handlers.Remove(handler);
                     if (handlers.Count == 0)
                     {
-                        _handlers.TryRemove(pattern, out _);
+                        _handlers.TryRemove(address, out _);
                     }
                 }
             }
         });
-    }
-    
-    private List<Func<ChannelMessage, Task>> GetMatchingHandlers(ChannelMessage message)
-    {
-        var matchingHandlers = new List<Func<ChannelMessage, Task>>();
-        
-        lock (_handlersLock)
-        {
-            foreach (var (pattern, handlers) in _handlers)
-            {
-                if (MatchesPattern(pattern, message))
-                {
-                    matchingHandlers.AddRange(handlers);
-                }
-            }
-        }
-        
-        return matchingHandlers;
-    }
-    
-    private bool MatchesPattern(string pattern, ChannelMessage message)
-    {
-        // Handle broadcast messages
-        if (message.Target == "*" || message.Target == null)
-        {
-            // Broadcast patterns like "*.broadcast.*" or specific type patterns
-            if (pattern.Contains("broadcast") || pattern == "*" || pattern == message.Type)
-            {
-                return true;
-            }
-        }
-        
-        // Handle targeted messages
-        if (!string.IsNullOrEmpty(message.Target))
-        {
-            // Check if pattern matches target
-            if (MatchesWildcard(pattern, message.Target))
-            {
-                return true;
-            }
-            
-            // Also match on message type
-            if (pattern == message.Type)
-            {
-                return true;
-            }
-        }
-        
-        // Match type patterns
-        if (MatchesWildcard(pattern, message.Type))
-        {
-            return true;
-        }
-        
-        return false;
-    }
-    
-    private bool MatchesWildcard(string pattern, string text)
-    {
-        if (pattern == "*") return true;
-        if (pattern == text) return true;
-        
-        // Convert wildcard pattern to regex
-        var regexPattern = "^" + Regex.Escape(pattern).Replace("\\*", ".*") + "$";
-        return Regex.IsMatch(text, regexPattern);
     }
     
     public void Dispose()

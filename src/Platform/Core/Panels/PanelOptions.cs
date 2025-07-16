@@ -51,9 +51,10 @@ public class PanelOptions
     public required string UiModule { get; set; }
     
     /// <summary>
-    /// The specific panel/component to mount from the UI module
+    /// The specific component to mount from the UI module (optional)
+    /// If not specified, defaults to "default"
     /// </summary>
-    public string? PanelId { get; set; }
+    public string? ComponentName { get; set; }
     
     /// <summary>
     /// Custom HTML template (optional - uses default if not provided)

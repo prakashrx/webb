@@ -17,12 +17,12 @@ public interface IMessageChannel : IDisposable
     Task SendAsync(ChannelMessage message);
     
     /// <summary>
-    /// Subscribe to messages matching a pattern
+    /// Subscribe to messages for a specific address
     /// </summary>
-    /// <param name="pattern">Pattern to match (supports wildcards like "process.panel.*")</param>
-    /// <param name="handler">Handler to invoke when message matches</param>
+    /// <param name="address">The address to receive messages for (e.g., "main.settings")</param>
+    /// <param name="handler">Handler to invoke when message is received</param>
     /// <returns>Disposable subscription</returns>
-    IDisposable Subscribe(string pattern, Func<ChannelMessage, Task> handler);
+    IDisposable Subscribe(string address, Func<ChannelMessage, Task> handler);
     
     /// <summary>
     /// Raised when a message is received

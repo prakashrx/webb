@@ -47,7 +47,7 @@ public partial class WorkbenchEntry : Form
                 CanMaximize = false,
                 CanMinimize = false,
                 UiModule = "workbench",
-                PanelId = "main-toolbar"
+                ComponentName = "main-toolbar"
             });
             
             // Handle main toolbar closing - exit the app
@@ -71,22 +71,24 @@ public partial class WorkbenchEntry : Form
     private void RegisterPanelDefinitions()
     {
         // Register all available panels
-        _windowManager.RegisterPanel("settings", new PanelDefinition
+        _windowManager.RegisterPanel(new PanelOptions
         {
+            Id = "settings",
             Title = "Settings",
             Width = 800,
             Height = 600,
             UiModule = "workbench",
-            PanelId = "settings"
+            ComponentName = "settings"
         });
         
-        _windowManager.RegisterPanel("workspace", new PanelDefinition
+        _windowManager.RegisterPanel(new PanelOptions
         {
+            Id = "workspace",
             Title = "Workspace",
             Width = 1400,
             Height = 900,
             UiModule = "workbench",
-            PanelId = "workspace"
+            ComponentName = "workspace"
         });
     }
 

@@ -14,7 +14,7 @@ public class WindowManager : IDisposable
     private readonly IMessageChannel _channel;
     private readonly string _processId = "main";
     private readonly ConcurrentDictionary<string, IPanel> _panels = new();
-    private readonly ConcurrentDictionary<string, PanelDefinition> _panelDefinitions = new();
+    private readonly ConcurrentDictionary<string, PanelOptions> _registeredPanels = new();
     private string? _defaultContentPath;
     private bool _isInitialized;
     private bool _isDisposed;
@@ -96,14 +96,16 @@ public class WindowManager : IDisposable
     }
     
     /// <summary>
-    /// Register a panel definition that can be opened later
+    /// Register a panel that can be opened later
     /// </summary>
-    public void RegisterPanel(string panelId, PanelDefinition definition)
+    public void RegisterPanel(PanelOptions options)
     {
-        if (string.IsNullOrWhiteSpace(panelId))
-            throw new ArgumentException("Panel ID cannot be empty", nameof(panelId));
+        if (options == null)
+            throw new ArgumentNullException(nameof(options));
+        if (string.IsNullOrWhiteSpace(options.Id))
+            throw new ArgumentException("Panel ID cannot be empty", nameof(options));
             
-        _panelDefinitions[panelId] = definition ?? throw new ArgumentNullException(nameof(definition));
+        _registeredPanels[options.Id] = options;
     }
     
     /// <summary>
@@ -121,15 +123,15 @@ public class WindowManager : IDisposable
             return existingPanel;
         }
         
-        // Get panel definition
-        if (!_panelDefinitions.TryGetValue(panelId, out var definition))
+        // Get registered panel options
+        if (!_registeredPanels.TryGetValue(panelId, out var options))
         {
-            throw new InvalidOperationException($"Panel '{panelId}' is not registered. Available panels: {string.Join(", ", _panelDefinitions.Keys)}");
+            throw new InvalidOperationException($"Panel '{panelId}' is not registered. Available panels: {string.Join(", ", _registeredPanels.Keys)}");
         }
         
         // Create the panel
         Console.WriteLine($"[WindowManager] Creating panel: {panelId}");
-        var panel = await CreatePanelAsync(panelId, definition);
+        var panel = await CreatePanelAsync(options);
         
         // Store and show
         _panels[panelId] = panel;
@@ -159,7 +161,7 @@ public class WindowManager : IDisposable
         }
         
         // Create the panel
-        var panel = await CreatePanelCoreAsync(options);
+        var panel = await CreatePanelAsync(options);
         
         // Store
         _panels[panelId] = panel;
@@ -218,28 +220,7 @@ public class WindowManager : IDisposable
         await Task.WhenAll(tasks);
     }
     
-    private async Task<IPanel> CreatePanelAsync(string panelId, PanelDefinition definition)
-    {
-        var options = new PanelOptions
-        {
-            Id = panelId,
-            Title = definition.Title,
-            Width = definition.Width,
-            Height = definition.Height,
-            IsFrameless = definition.IsFrameless,
-            IsResizable = definition.IsResizable,
-            CanMaximize = definition.CanMaximize,
-            CanMinimize = definition.CanMinimize,
-            UiModule = definition.UiModule,
-            PanelId = definition.PanelId,
-            HtmlTemplate = definition.HtmlTemplate,
-            ContentPath = definition.ContentPath ?? _defaultContentPath
-        };
-        
-        return await CreatePanelCoreAsync(options);
-    }
-    
-    private async Task<IPanel> CreatePanelCoreAsync(PanelOptions options)
+    private async Task<IPanel> CreatePanelAsync(PanelOptions options)
     {
         // TODO: Future - try to get window from pool
         // var browserWindow = GetPooledWindow() ?? CreateNewWindow(options);
@@ -303,7 +284,7 @@ public class WindowManager : IDisposable
         }
         
         _panels.Clear();
-        _panelDefinitions.Clear();
+        _registeredPanels.Clear();
         
         // TODO: Dispose window pool
         
@@ -311,23 +292,6 @@ public class WindowManager : IDisposable
     }
 }
 
-/// <summary>
-/// Definition for a panel that can be created
-/// </summary>
-public class PanelDefinition
-{
-    public required string Title { get; init; }
-    public int Width { get; init; } = 800;
-    public int Height { get; init; } = 600;
-    public bool IsFrameless { get; init; }
-    public bool IsResizable { get; init; } = true;
-    public bool CanMaximize { get; init; } = true;
-    public bool CanMinimize { get; init; } = true;
-    public required string UiModule { get; init; }
-    public string? PanelId { get; init; }
-    public string? HtmlTemplate { get; init; }
-    public string? ContentPath { get; init; }
-}
 
 /// <summary>
 /// Event args for panel events

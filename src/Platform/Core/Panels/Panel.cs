@@ -89,8 +89,8 @@ public class Panel : IPanel
         await Window.LoadHtmlAsync(html);
         Console.WriteLine($"[Panel] HTML content loaded");
         
-        // Set up IPC handlers after WebView2 is ready
-        SetupIpcHandlers();
+        // Set up message handlers
+        SetupMessageHandlers();
         
         IsInitialized = true;
         Console.WriteLine($"[Panel] Panel {Id} initialization complete");
@@ -182,7 +182,7 @@ public class Panel : IPanel
             
         // Default template for loading UI modules
         var baseUrl = $"http://webui.local/{Options.UiModule}";
-        var panelId = Options.PanelId ?? "default";
+        var componentName = Options.ComponentName ?? Options.Id;
         
         return $$"""
             <!DOCTYPE html>
@@ -212,9 +212,9 @@ public class Panel : IPanel
                     });
                     
                     // Load and mount the panel directly
-                    const panelId = '{{panelId}}';
+                    const panelId = '{{componentName}}';
                     
-                    import('{{baseUrl}}/dist/{{panelId}}.js')
+                    import('{{baseUrl}}/dist/{{componentName}}.js')
                         .then(module => {
                             // Mount the Svelte component
                             if (module.default) {
@@ -240,16 +240,17 @@ public class Panel : IPanel
             """;
     }
 
-    private void SetupIpcHandlers()
+    private void SetupMessageHandlers()
     {
-        // Subscribe to all messages for this panel to forward to JavaScript
-        _messageBus.On("*", async (dynamic? data) =>
+        // Subscribe to "*" to forward ALL message types that arrive at this panel to JavaScript
+        // The "*" here means "all message types", not "all panels"
+        _messageBus.On<object>("*", async (data) =>
         {
             // Forward all messages to JavaScript via PostMessage
             await SendMessageAsync("message", data);
         });
         
-        // Handle specific panel messages
+        // Handle specific panel messages in C# (for raising events)
         _messageBus.On<PanelMessage>("panel.message", async (message) =>
         {
             if (message != null)

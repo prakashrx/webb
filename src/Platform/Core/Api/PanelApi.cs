@@ -64,22 +64,14 @@ public class PanelApi
     }
 
     /// <summary>
-    /// Close the current panel
+    /// Close the current panel or a specific panel by ID
     /// </summary>
-    public void Close()
-    {
-        _panel.Close();
-    }
-    
-    /// <summary>
-    /// Close a specific panel by ID
-    /// </summary>
-    public void ClosePanel(string panelId)
+    public void Close(string? panelId = null)
     {
         if (string.IsNullOrEmpty(panelId))
         {
-            // If no panel ID provided, close current window
-            Close();
+            // Close current panel
+            _panel.Close();
         }
         else
         {

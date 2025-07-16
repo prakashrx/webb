@@ -25,20 +25,10 @@ public class MessageBus : IDisposable
         _processId = processId ?? throw new ArgumentNullException(nameof(processId));
         _panelId = panelId ?? throw new ArgumentNullException(nameof(panelId));
         
-        // Subscribe to messages for this panel
-        var patterns = new[]
-        {
-            Address,                    // Direct messages to this panel
-            $"{_processId}.{_panelId}.*", // Messages to this panel with sub-routing
-            $"*.{_panelId}",           // Messages to this panel from any process
-            "*"                        // Broadcast messages
-        };
-        
-        foreach (var pattern in patterns)
-        {
-            var subscription = _channel.Subscribe(pattern, HandleChannelMessage);
-            _subscriptions.Add(subscription);
-        }
+        // Subscribe with our address to receive messages targeted to us
+        // The channel will also send us broadcast messages automatically
+        var subscription = _channel.Subscribe(Address, HandleChannelMessage);
+        _subscriptions.Add(subscription);
     }
     
     /// <summary>
@@ -107,14 +97,6 @@ public class MessageBus : IDisposable
     }
     
     /// <summary>
-    /// Subscribe to a message type with dynamic data
-    /// </summary>
-    public void On(string type, Func<dynamic?, Task> handler)
-    {
-        On<object>(type, async (data) => await handler(data));
-    }
-    
-    /// <summary>
     /// Unsubscribe from a message type
     /// </summary>
     public void Off(string type)
@@ -127,9 +109,9 @@ public class MessageBus : IDisposable
     
     private async Task HandleChannelMessage(ChannelMessage message)
     {
-        // Check if this message is for us
-        if (!ShouldHandleMessage(message)) return;
-        
+        // The channel already sent us this message because:
+        // 1. It was targeted to our address, OR
+        // 2. It was a broadcast message (Target == "*")
         Console.WriteLine($"[MessageBus] {Address} handling message - Type: {message.Type}");
         
         List<Func<object?, Task>>? handlers = null;
@@ -181,26 +163,6 @@ public class MessageBus : IDisposable
             
             await Task.WhenAll(tasks);
         }
-    }
-    
-    private bool ShouldHandleMessage(ChannelMessage message)
-    {
-        // Handle broadcast messages
-        if (message.Target == "*" || string.IsNullOrEmpty(message.Target))
-        {
-            return true;
-        }
-        
-        // Handle messages targeted at us
-        if (message.Target == Address || 
-            message.Target == _panelId ||
-            message.Target?.StartsWith($"{Address}.") == true)
-        {
-            return true;
-        }
-        
-        // Don't handle messages for other targets
-        return false;
     }
     
     public void Dispose()
