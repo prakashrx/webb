@@ -1,0 +1,4 @@
+<Project>
+  <!-- Import WebUI SDK for development -->
+  <Import Project="../src/WebUI.Desktop.Sdk/Sdk/Sdk.props" />
+</Project>

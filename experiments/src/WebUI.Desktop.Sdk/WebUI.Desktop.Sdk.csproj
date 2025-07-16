@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <PackageType>MSBuildSdk</PackageType>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <NoPackageAnalysis>true</NoPackageAnalysis>
+    <NoBuild>true</NoBuild>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <Description>MSBuild SDK for WebUI Desktop Applications</Description>
+    <PackageId>WebUI.Desktop.Sdk</PackageId>
+    <Version>1.0.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="Sdk\**" Pack="true" PackagePath="Sdk" />
+  </ItemGroup>
+
+</Project>

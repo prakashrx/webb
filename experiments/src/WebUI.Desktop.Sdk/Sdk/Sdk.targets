@@ -1,0 +1,46 @@
+<Project>
+  <!-- WebUI build pipeline -->
+  <PropertyGroup>
+    <WebUIDevMode Condition="'$(Configuration)' == 'Debug'">true</WebUIDevMode>
+    <WebUIDevMode Condition="'$(Configuration)' != 'Debug'">false</WebUIDevMode>
+    <WebUIBuildToolsPath>$(MSBuildThisFileDirectory)..\tools\build</WebUIBuildToolsPath>
+  </PropertyGroup>
+
+  <!-- Check if Node.js is available -->
+  <Target Name="CheckNodeJS" BeforeTargets="CompilePanels">
+    <Exec Command="node --version" 
+          ConsoleToMSBuild="true" 
+          IgnoreExitCode="true">
+      <Output TaskParameter="ExitCode" PropertyName="NodeExitCode" />
+    </Exec>
+    
+    <Error Condition="'$(NodeExitCode)' != '0'" 
+           Text="Node.js is required to build WebUI panels. Please install Node.js from https://nodejs.org" />
+  </Target>
+
+  <!-- Install npm packages if needed -->
+  <Target Name="RestoreWebUITools" 
+          BeforeTargets="CompilePanels"
+          Condition="!Exists('$(WebUIBuildToolsPath)\node_modules')">
+    <Message Text="📦 Installing WebUI build tools..." Importance="high" />
+    <Exec Command="npm install" 
+          WorkingDirectory="$(WebUIBuildToolsPath)" />
+  </Target>
+
+  <Target Name="CompilePanels" 
+          BeforeTargets="BeforeBuild"
+          DependsOnTargets="CheckNodeJS;RestoreWebUITools"
+          Condition="'@(Panel)' != ''">
+    <Message Text="🚀 WebUI: Compiling panels..." Importance="high" />
+    <Message Text="📁 Dev Mode: $(WebUIDevMode)" Importance="high" />
+    <Message Text="🔍 Found panels: @(Panel)" Importance="normal" />
+    
+    <!-- Create output directory -->
+    <MakeDir Directories="$(OutputPath)panels" />
+    
+    <!-- Compile each panel into self-contained bundle -->
+    <Exec Command="node build-panel.js &quot;%(Panel.FullPath)&quot; &quot;$(MSBuildProjectDirectory)\$(OutputPath)panels&quot; $(WebUIDevMode)"
+          WorkingDirectory="$(WebUIBuildToolsPath)"
+          ConsoleToMSBuild="true" />
+  </Target>
+</Project>

@@ -6,7 +6,9 @@
       "Bash(move CoreWindowsIWebViewHost.cs ..srcPlatformCoreHosting )",
       "Bash(move CoreWindowsWebViewOptions.cs ..srcPlatformCoreHosting)",
       "Bash(xcopy:*)",
-      "Bash(powershell:*)"
+      "Bash(powershell:*)",
+      "Bash(dir:*)",
+      "Bash(ls:*)"
     ],
     "deny": []
   }

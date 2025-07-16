@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using System.Threading;
 using System.Windows.Forms;
 using Microsoft.Web.WebView2.WinForms;
@@ -29,36 +31,40 @@ public static class WebUI
         {
             await webView.EnsureCoreWebView2Async();
             
+            // Set up virtual host for serving files
+            var panelsPath = Path.Combine(AppContext.BaseDirectory, "panels");
+            if (Directory.Exists(panelsPath))
+            {
+                webView.CoreWebView2.SetVirtualHostNameToFolderMapping(
+                    "webui.local",
+                    panelsPath,
+                    Microsoft.Web.WebView2.Core.CoreWebView2HostResourceAccessKind.Allow);
+            }
+            
             webView.NavigateToString($@"
                 <!DOCTYPE html>
                 <html>
                 <head>
                     <title>{mainPanelName}</title>
+                    <meta charset=""utf-8"">
                     <style>
                         body {{
-                            font-family: system-ui;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            height: 100vh;
+                            font-family: system-ui, -apple-system, sans-serif;
                             margin: 0;
-                            background: #f3f4f6;
-                        }}
-                        .container {{
-                            text-align: center;
-                            padding: 2rem;
-                            background: white;
-                            border-radius: 8px;
-                            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                            padding: 0;
                         }}
                     </style>
                 </head>
                 <body>
-                    <div class='container'>
-                        <h1>🎉 WebUI is running!</h1>
-                        <p>Panel: {mainPanelName}</p>
-                        <p>Soon this will load your Svelte component!</p>
-                    </div>
+                    <div id=""app""></div>
+                    <script type=""module"">
+                        import Panel from 'http://webui.local/{mainPanelName}.js';
+                        
+                        // Mount the Svelte component
+                        new Panel({{
+                            target: document.getElementById('app')
+                        }});
+                    </script>
                 </body>
                 </html>
             ");

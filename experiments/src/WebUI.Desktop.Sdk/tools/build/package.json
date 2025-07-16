@@ -1,0 +1,23 @@
+{
+  "name": "@webui/build-tools",
+  "version": "1.0.0",
+  "description": "WebUI SDK Build Tools",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build-panel": "node build-panel.js"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^25.0.0",
+    "@rollup/plugin-node-resolve": "^15.0.0",
+    "@rollup/plugin-terser": "^0.4.0",
+    "autoprefixer": "^10.4.0",
+    "postcss": "^8.5.6",
+    "rollup": "^4.0.0",
+    "rollup-plugin-postcss": "^4.0.2",
+    "rollup-plugin-svelte": "^7.2.0",
+    "svelte": "^4.2.0",
+    "svelte-preprocess": "^6.0.3",
+    "tailwindcss": "^3.4.0"
+  }
+}
