@@ -10,7 +10,7 @@ namespace WebUI.Core.Panels;
 /// </summary>
 public class Panel : IPanel
 {
-    private readonly IpcRouter _ipcRouter;
+    private readonly MessageBus _messageBus;
     private readonly HostApiBridge _hostApi;
     private bool _isDisposed;
 
@@ -18,14 +18,15 @@ public class Panel : IPanel
     public BrowserWindow Window { get; }
     public PanelOptions Options { get; }
     public bool IsInitialized { get; private set; }
+    public MessageBus MessageBus => _messageBus;
 
     public event EventHandler? Closed;
     public event EventHandler<PanelMessage>? MessageReceived;
 
-    public Panel(PanelOptions options, IpcRouter ipcRouter)
+    public Panel(PanelOptions options, MessageBus messageBus)
     {
         Options = options ?? throw new ArgumentNullException(nameof(options));
-        _ipcRouter = ipcRouter ?? throw new ArgumentNullException(nameof(ipcRouter));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         Id = options.Id;
         
         // Create browser window with specified options
@@ -39,11 +40,11 @@ public class Panel : IPanel
         );
         
         // Set up API bridge
-        _hostApi = new HostApiBridge(Id, _ipcRouter, Window);
+        _hostApi = new HostApiBridge(this, _messageBus);
         
         // Wire up events
         Window.Closed += OnWindowClosed;
-        SetupIpcHandlers();
+        // Don't set up IPC handlers until after initialization
     }
 
     public async Task InitializeAsync()
@@ -51,11 +52,17 @@ public class Panel : IPanel
         if (IsInitialized)
             return;
             
+        Console.WriteLine($"[Panel] Initializing panel: {Id}");
+        
         // Wait for WebView2 to be ready
+        Console.WriteLine($"[Panel] Waiting for WebView2 initialization...");
         await Window.WaitForInitializationAsync();
+        Console.WriteLine($"[Panel] WebView2 initialized");
         
         // Add the API bridge to the window
+        Console.WriteLine($"[Panel] Adding host API bridge...");
         await Window.AddHostObjectAsync("api", _hostApi);
+        Console.WriteLine($"[Panel] Host API bridge added");
         
         // Inject WebUI API JavaScript
         await InjectWebUIApiAsync();
@@ -65,7 +72,9 @@ public class Panel : IPanel
         {
             try
             {
+                Console.WriteLine($"[Panel] Setting up virtual host mapping: webui.local -> {Options.ContentPath}");
                 await Window.SetVirtualHostMappingAsync("webui.local", Options.ContentPath);
+                Console.WriteLine($"[Panel] Virtual host mapping set");
             }
             catch (Exception ex)
             {
@@ -75,10 +84,16 @@ public class Panel : IPanel
         }
         
         // Generate and load HTML
+        Console.WriteLine($"[Panel] Loading HTML content...");
         var html = GenerateHtml();
         await Window.LoadHtmlAsync(html);
+        Console.WriteLine($"[Panel] HTML content loaded");
+        
+        // Set up IPC handlers after WebView2 is ready
+        SetupIpcHandlers();
         
         IsInitialized = true;
+        Console.WriteLine($"[Panel] Panel {Id} initialization complete");
     }
     
     private async Task InjectWebUIApiAsync()
@@ -99,12 +114,12 @@ public class Panel : IPanel
             var initScript = $@"
                 {jsContent}
                 
-                // Ensure webui is globally available
-                if (typeof WebUIApi !== 'undefined' && WebUIApi.webui) {{
-                    window.webui = WebUIApi.webui;
+                // The script already sets window.webui, so just verify it's available
+                if (typeof window.webui !== 'undefined') {{
+                    console.log('WebUI API injected and available, version:', window.webui.version);
+                }} else {{
+                    console.error('WebUI API failed to initialize');
                 }}
-                
-                console.log('WebUI API injected and available');
             ";
             
             await Window.WebView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(initScript);
@@ -136,17 +151,27 @@ public class Panel : IPanel
 
     public async Task SendMessageAsync(string type, object? data = null)
     {
-        var message = new
+        // Use WebView2's PostMessage API for C# → JS communication
+        if (Window?.WebView?.CoreWebView2 != null)
         {
-            type,
-            data,
-            panelId = Id
-        };
-        
-        var json = JsonSerializer.Serialize(message);
-        var script = $"window.postMessage({json}, '*');";
-        
-        await Window.EvaluateAsync(script);
+            var message = new
+            {
+                type,
+                data,
+                panelId = Id
+            };
+            
+            var json = JsonSerializer.Serialize(message);
+            Window.WebView.CoreWebView2.PostWebMessageAsString(json);
+        }
+    }
+    
+    public async Task ExecuteScriptAsync(string script)
+    {
+        if (Window?.WebView?.CoreWebView2 != null)
+        {
+            await Window.WebView.CoreWebView2.ExecuteScriptAsync(script);
+        }
     }
 
     protected virtual string GenerateHtml()
@@ -176,12 +201,12 @@ public class Panel : IPanel
             <body>
                 <div id="app"></div>
                 <script type="module">
-                    // Set up message handling
-                    window.addEventListener('message', (event) => {
+                    // Set up message handling from WebView2
+                    window.chrome.webview.addEventListener('message', (event) => {
                         if (event.data && event.data.type) {
-                            // Forward to WebUI API if available
-                            if (window.webui?.ipc?.send) {
-                                window.webui.ipc.send('panel.message', event.data);
+                            // Dispatch to WebUI message system
+                            if (window.webui?.message) {
+                                window.webui.message._handleMessage(event.data);
                             }
                         }
                     });
@@ -217,8 +242,15 @@ public class Panel : IPanel
 
     private void SetupIpcHandlers()
     {
-        // Handle messages from JavaScript
-        _ipcRouter.On<PanelMessage>("panel.message", async (message) =>
+        // Subscribe to all messages for this panel to forward to JavaScript
+        _messageBus.On("*", async (dynamic? data) =>
+        {
+            // Forward all messages to JavaScript via PostMessage
+            await SendMessageAsync("message", data);
+        });
+        
+        // Handle specific panel messages
+        _messageBus.On<PanelMessage>("panel.message", async (message) =>
         {
             if (message != null)
             {

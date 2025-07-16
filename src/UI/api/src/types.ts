@@ -19,23 +19,28 @@ export interface IpcMessage {
 
 // COM Bridge interface (mirrors C# HostApiBridge)
 export interface HostApiBridge {
-  GetPanelId(): string;
   Panel: {
-    RegisterView(id: string, url: string): void;
     Open(id: string): void;
-    Close(id?: string): void;
-    On(eventType: string, handlerName: string): string;
+    Close(): void;
+    ClosePanel(id: string): void;
     Minimize(): void;
     Maximize(): void;
     Restore(): void;
     IsMaximized(): boolean;
     OpenDevTools(): void;
+    GetId(): string;
+    GetTitle(): string;
   };
-  Ipc: {
+  Message: {
     Send(type: string, payload: string): void;
-    On(type: string, handlerName: string): string;
+    SendTo(target: string, type: string, payload: string): void;
     Broadcast(type: string, payload: string): void;
   };
+}
+
+// WebView2 message event
+export interface WebViewMessageEvent {
+  data: any;
 }
 
 // Global WebView2 interface
@@ -46,6 +51,8 @@ declare global {
         hostObjects?: {
           api?: HostApiBridge;
         };
+        addEventListener?(event: 'message', handler: (event: WebViewMessageEvent) => void): void;
+        removeEventListener?(event: 'message', handler: (event: WebViewMessageEvent) => void): void;
       };
     };
   }

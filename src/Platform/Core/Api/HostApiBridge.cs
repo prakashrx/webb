@@ -1,29 +1,23 @@
 using System.Runtime.InteropServices;
-using WebUI.Core.Hosting;
 using WebUI.Core.Communication;
+using WebUI.Core.Panels;
 
 namespace WebUI.Core.Api;
 
+/// <summary>
+/// Bridge that aggregates all WebUI APIs for JavaScript access.
+/// This is exposed via window.chrome.webview.hostObjects.api
+/// </summary>
 [ComVisible(true)]
 [ClassInterface(ClassInterfaceType.AutoDual)]
 public class HostApiBridge
 {
-    private readonly string _panelId;
-    private readonly IpcRouter _ipcRouter;
+    public PanelApi Panel { get; }
+    public MessageApi Message { get; }
     
-    private readonly PanelApi _panel;
-    private readonly IpcApi _ipc;
-
-    public PanelApi Panel => _panel;
-    public IpcApi Ipc => _ipc;
-
-    public HostApiBridge(string panelId, IpcRouter ipcRouter, BrowserWindow? browserWindow = null)
+    public HostApiBridge(IPanel panel, MessageBus messageBus)
     {
-        _panelId = panelId;
-        _ipcRouter = ipcRouter;
-        _panel = new PanelApi(ipcRouter, browserWindow);
-        _ipc = new IpcApi(panelId, ipcRouter);
+        Panel = new PanelApi(panel);
+        Message = new MessageApi(messageBus);
     }
-
-    public string GetPanelId() => _panelId;
 }

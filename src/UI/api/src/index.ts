@@ -2,17 +2,17 @@
  * WebUI Platform API
  * 
  * Clean, modern JavaScript API for WebUI Platform.
- * Provides panel management and IPC communication.
+ * Provides panel management and message communication.
  */
 
 import { panel } from './panel.js';
-import { ipc } from './ipc.js';
+import { message } from './message.js';
 import { isBridgeAvailable } from './utils.js';
 
 // Main WebUI API object
 export const webui = {
   panel,
-  ipc,
+  message,
   
   /**
    * Check if the WebUI API is available
@@ -39,5 +39,5 @@ if (typeof window !== 'undefined') {
 }
 
 // Export for ES modules
-export { panel, ipc };
+export { panel, message };
 export default webui;

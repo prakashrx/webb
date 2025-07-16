@@ -1,90 +1,80 @@
 using System.Runtime.InteropServices;
-using WebUI.Core.Hosting;
 using WebUI.Core.Communication;
+using WebUI.Core.Panels;
 
 namespace WebUI.Core.Api;
 
+/// <summary>
+/// COM-visible API for panel operations from JavaScript
+/// </summary>
 [ComVisible(true)]
 [ClassInterface(ClassInterfaceType.AutoDual)]
 public class PanelApi
 {
-    private readonly IpcRouter _ipc;
-    private readonly Dictionary<string, string> _registeredViews = new();
-    private readonly BrowserWindow? _browserWindow;
+    private readonly IPanel _panel;
 
-    public PanelApi(IpcRouter ipc, BrowserWindow? browserWindow = null)
+    public PanelApi(IPanel panel)
     {
-        _ipc = ipc;
-        _browserWindow = browserWindow;
+        _panel = panel ?? throw new ArgumentNullException(nameof(panel));
     }
 
-    public void RegisterView(string panelId, string url)
-    {
-        _registeredViews[panelId] = url;
-        _ipc.SendAsync("panel.register", new
-        {
-            panelId,
-            url
-        });
-    }
-
+    /// <summary>
+    /// Open another panel by ID
+    /// </summary>
     public void Open(string panelId)
     {
         Console.WriteLine($"[PanelApi] Open called with panelId: {panelId}");
         
-        // Send message to open a panel
-        // This will be handled by WindowManager via IpcRouter
-        _ipc.SendAsync("panel.open", new
-        {
-            PanelId = panelId
-        });
-        
-        Console.WriteLine($"[PanelApi] Sent panel.open message for: {panelId}");
+        // Send message to open a panel - will be handled by WindowManager
+        // Fire and forget, but stay on current thread to avoid COM issues
+        _ = _panel.MessageBus.SendAsync("panel.open", new { PanelId = panelId });
     }
 
-    public string On(string eventType, string handlerName)
-    {
-        var handlerId = Guid.NewGuid().ToString();
-        _ipc.On($"panel.{eventType}", async (dynamic payload) =>
-        {
-            // Call JavaScript handler by name
-            await Task.Run(() => InvokeJavaScriptHandler(handlerName, payload?.ToString() ?? string.Empty));
-        });
-        return handlerId; // Return for cleanup
-    }
-
-    // Window control methods for panel management
+    /// <summary>
+    /// Minimize the current panel window
+    /// </summary>
     public void Minimize()
     {
-        if (_browserWindow != null)
+        if (_panel.Window?.Form != null)
         {
-            _browserWindow.WindowState = System.Windows.Forms.FormWindowState.Minimized;
+            _panel.Window.Form.WindowState = System.Windows.Forms.FormWindowState.Minimized;
         }
     }
 
+    /// <summary>
+    /// Maximize the current panel window
+    /// </summary>
     public void Maximize()
     {
-        if (_browserWindow != null)
+        if (_panel.Window?.Form != null)
         {
-            _browserWindow.WindowState = System.Windows.Forms.FormWindowState.Maximized;
+            _panel.Window.Form.WindowState = System.Windows.Forms.FormWindowState.Maximized;
         }
     }
 
+    /// <summary>
+    /// Restore the current panel window to normal state
+    /// </summary>
     public void Restore()
     {
-        if (_browserWindow != null)
+        if (_panel.Window?.Form != null)
         {
-            _browserWindow.WindowState = System.Windows.Forms.FormWindowState.Normal;
+            _panel.Window.Form.WindowState = System.Windows.Forms.FormWindowState.Normal;
         }
     }
 
+    /// <summary>
+    /// Close the current panel
+    /// </summary>
     public void Close()
     {
-        // Close current panel/window
-        _browserWindow?.Close();
+        _panel.Close();
     }
     
-    public void Close(string panelId)
+    /// <summary>
+    /// Close a specific panel by ID
+    /// </summary>
+    public void ClosePanel(string panelId)
     {
         if (string.IsNullOrEmpty(panelId))
         {
@@ -93,29 +83,44 @@ public class PanelApi
         }
         else
         {
-            // Send IPC message to close a specific panel
-            _ipc.SendAsync("panel.close", new
-            {
-                PanelId = panelId
-            });
+            // Send message to close a specific panel
+            // Fire and forget, but stay on current thread to avoid COM issues
+            _ = _panel.MessageBus.SendAsync("panel.close", new { PanelId = panelId });
         }
     }
 
+    /// <summary>
+    /// Check if the window is maximized
+    /// </summary>
     public bool IsMaximized()
     {
-        return _browserWindow?.Form.WindowState == System.Windows.Forms.FormWindowState.Maximized;
+        return _panel.Window?.Form.WindowState == System.Windows.Forms.FormWindowState.Maximized;
     }
 
+    /// <summary>
+    /// Open developer tools for the current panel
+    /// </summary>
     public void OpenDevTools()
     {
-        if (_browserWindow?.WebView?.CoreWebView2 != null)
+        if (_panel.Window?.WebView?.CoreWebView2 != null)
         {
-            _browserWindow.WebView.CoreWebView2.OpenDevToolsWindow();
+            _panel.Window.WebView.CoreWebView2.OpenDevToolsWindow();
         }
     }
-
-    private void InvokeJavaScriptHandler(string handlerName, string payload)
+    
+    /// <summary>
+    /// Get the current panel's ID
+    /// </summary>
+    public string GetId()
     {
-        // This will be called via WebView2's ExecuteScriptAsync in future tasks
+        return _panel.Id;
+    }
+    
+    /// <summary>
+    /// Get the current panel's title
+    /// </summary>
+    public string GetTitle()
+    {
+        return _panel.Options.Title;
     }
 }

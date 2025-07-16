@@ -11,8 +11,8 @@ namespace WebUI.Core.Windows;
 /// </summary>
 public class WindowManager : IDisposable
 {
-    private readonly IpcRouter _ipcRouter;
-    private readonly IpcTransport _ipcTransport;
+    private readonly IMessageChannel _channel;
+    private readonly string _processId = "main";
     private readonly ConcurrentDictionary<string, IPanel> _panels = new();
     private readonly ConcurrentDictionary<string, PanelDefinition> _panelDefinitions = new();
     private string? _defaultContentPath;
@@ -40,15 +40,19 @@ public class WindowManager : IDisposable
     public event EventHandler<PanelMessage>? MessageReceived;
     
     /// <summary>
-    /// The IPC router for external communication
+    /// The message channel for communication
     /// </summary>
-    public IpcRouter IpcRouter => _ipcRouter;
+    public IMessageChannel Channel => _channel;
     
     public WindowManager()
     {
-        // Create our own IPC infrastructure
-        _ipcTransport = new IpcTransport("workbench");
-        _ipcRouter = new IpcRouter(_ipcTransport);
+        // Create in-process channel for now
+        _channel = new InProcessChannel();
+        
+        // Future: Check if extension host is needed
+        // _channel = IsExtensionProcess() 
+        //     ? new NamedPipeChannel() 
+        //     : new InProcessChannel();
     }
     
     /// <summary>
@@ -61,16 +65,25 @@ public class WindowManager : IDisposable
             
         _defaultContentPath = defaultContentPath;
         
-        // Subscribe to panel operations via IPC
-        _ipcRouter.On<PanelOpenRequest>("panel.open", async (request) =>
+        // Create a message bus for window manager operations
+        var managerBus = new MessageBus(_channel, _processId, "window-manager");
+        
+        // Subscribe to panel operations
+        managerBus.On<PanelOpenRequest>("panel.open", async (request) =>
         {
-            Console.WriteLine($"[WindowManager] Received panel.open request for: {request.PanelId}");
-            await OpenAsync(request.PanelId);
+            if (request != null)
+            {
+                Console.WriteLine($"[WindowManager] Received panel.open request for: {request.PanelId}");
+                await OpenAsync(request.PanelId);
+            }
         });
         
-        _ipcRouter.On<PanelCloseRequest>("panel.close", async (request) =>
+        managerBus.On<PanelCloseRequest>("panel.close", async (request) =>
         {
-            Close(request.PanelId);
+            if (request != null)
+            {
+                Close(request.PanelId);
+            }
             await Task.CompletedTask;
         });
         
@@ -115,10 +128,12 @@ public class WindowManager : IDisposable
         }
         
         // Create the panel
+        Console.WriteLine($"[WindowManager] Creating panel: {panelId}");
         var panel = await CreatePanelAsync(panelId, definition);
         
         // Store and show
         _panels[panelId] = panel;
+        Console.WriteLine($"[WindowManager] Showing panel: {panelId}");
         panel.Show();
         
         // Raise event
@@ -235,8 +250,11 @@ public class WindowManager : IDisposable
             options.ContentPath = _defaultContentPath;
         }
         
-        // For now, create new panel each time
-        var panel = new WebUI.Core.Panels.Panel(options, _ipcRouter);
+        // Create message bus for this panel
+        var messageBus = new MessageBus(_channel, _processId, options.Id);
+        
+        // Create new panel
+        var panel = new WebUI.Core.Panels.Panel(options, messageBus);
         
         // Wire up events
         panel.Closed += OnPanelClosed;

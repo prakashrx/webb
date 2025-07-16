@@ -7,23 +7,19 @@ export class PanelManager {
   private handlers = new Map<string, string>();
 
   /**
-   * Register a panel view with the given ID and URL
+   * Get the current panel's ID
    */
-  public registerView(id: string, url: string): void {
+  public getId(): string {
     const bridge = getBridge();
-    bridge.Panel.RegisterView(id, url);
+    return bridge.Panel.GetId();
   }
 
   /**
-   * Register a Svelte component as a panel (convenience wrapper)
+   * Get the current panel's title
    */
-  public registerPanel(id: string, component: any): void {
-    // Store the component for later mounting
-    (window as any).__webuiPanels = (window as any).__webuiPanels || new Map();
-    (window as any).__webuiPanels.set(id, component);
-    
-    // Register with a special URL that indicates this is a component panel
-    this.registerView(id, `component://${id}`);
+  public getTitle(): string {
+    const bridge = getBridge();
+    return bridge.Panel.GetTitle();
   }
 
   /**
@@ -39,46 +35,9 @@ export class PanelManager {
    */
   public closePanel(id: string): void {
     const bridge = getBridge();
-    bridge.Panel.Close(id);
+    bridge.Panel.ClosePanel(id);
   }
 
-  /**
-   * Listen for panel events
-   */
-  public on(eventType: string, handler: (data?: any) => void): string {
-    const bridge = getBridge();
-    const handlerId = generateUUID();
-    const handlerName = `panel_${handlerId}`;
-
-    // Store handler for cleanup
-    this.handlers.set(handlerId, handlerName);
-
-    // Create global handler function
-    (window as any)[handlerName] = (payload?: string) => {
-      try {
-        const data = payload ? JSON.parse(payload) : undefined;
-        handler(data);
-      } catch (error) {
-        console.error('Panel event handler error:', error);
-        handler(payload);
-      }
-    };
-
-    // Register with bridge
-    bridge.Panel.On(eventType, handlerName);
-    return handlerId;
-  }
-
-  /**
-   * Remove an event handler
-   */
-  public off(handlerId: string): void {
-    const handlerName = this.handlers.get(handlerId);
-    if (handlerName) {
-      delete (window as any)[handlerName];
-      this.handlers.delete(handlerId);
-    }
-  }
 
   // Window control methods
 
@@ -112,7 +71,7 @@ export class PanelManager {
   public close(panelId?: string): void {
     const bridge = getBridge();
     if (panelId) {
-      bridge.Panel.Close(panelId);
+      bridge.Panel.ClosePanel(panelId);
     } else {
       bridge.Panel.Close();
     }
@@ -134,34 +93,6 @@ export class PanelManager {
     bridge.Panel.OpenDevTools();
   }
 
-  /**
-   * Mount a registered panel component to a container element
-   * This is used internally by the platform when loading component-based panels
-   */
-  public mountPanel(panelId: string, containerId: string): void {
-    const panels = (window as any).__webuiPanels;
-    if (!panels || !panels.has(panelId)) {
-      throw new Error(`Panel '${panelId}' not registered. Did you call registerPanel() first?`);
-    }
-
-    const container = document.getElementById(containerId);
-    if (!container) {
-      throw new Error(`Container element '${containerId}' not found`);
-    }
-
-    const Component = panels.get(panelId);
-    try {
-      // Mount as Svelte component
-      new Component({
-        target: container,
-        props: {}
-      });
-      console.log(`Panel '${panelId}' mounted successfully`);
-    } catch (error) {
-      console.error(`Failed to mount panel '${panelId}':`, error);
-      throw error;
-    }
-  }
 }
 
 // Export singleton instance

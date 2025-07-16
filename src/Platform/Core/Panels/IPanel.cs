@@ -1,4 +1,5 @@
 using WebUI.Core.Hosting;
+using WebUI.Core.Communication;
 
 namespace WebUI.Core.Panels;
 
@@ -51,6 +52,16 @@ public interface IPanel : IDisposable
     /// Send a message to the panel's JavaScript context
     /// </summary>
     Task SendMessageAsync(string type, object? data = null);
+    
+    /// <summary>
+    /// Execute JavaScript code in the panel
+    /// </summary>
+    Task ExecuteScriptAsync(string script);
+    
+    /// <summary>
+    /// The message bus for this panel
+    /// </summary>
+    MessageBus MessageBus { get; }
     
     /// <summary>
     /// Event raised when the panel is closed
