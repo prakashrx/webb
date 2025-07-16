@@ -5,6 +5,8 @@ import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import terser from '@rollup/plugin-terser';
 import postcss from 'rollup-plugin-postcss';
+import tailwindcss from 'tailwindcss';
+import autoprefixer from 'autoprefixer';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -27,21 +29,45 @@ async function build() {
     
     console.log(`Building ${inputName} from ${inputFile} to ${outputDir}`);
     
+    // Create a wrapper that imports base CSS and the Svelte component
+    const wrapperContent = `
+import '${path.join(__dirname, 'base.css').replace(/\\/g, '/')}';
+import Component from '${inputFile.replace(/\\/g, '/')}';
+export default Component;
+`;
+    
+    const tempWrapper = path.join(__dirname, `${inputName}-wrapper.js`);
+    await import('fs').then(fs => fs.promises.writeFile(tempWrapper, wrapperContent));
+    
     // Create rollup config
     const bundle = await rollup({
-      input: inputFile,
+      input: tempWrapper,
       plugins: [
         svelte({
           preprocess: sveltePreprocess({
-            postcss: true
+            postcss: {
+              plugins: [
+                tailwindcss({
+                  content: [inputFile]
+                }),
+                autoprefixer()
+              ]
+            }
           }),
           compilerOptions: {
             dev: isDevelopment
-          }
+          },
+          emitCss: true
         }),
         postcss({
           extract: false, // Inline CSS in JS
-          minimize: !isDevelopment
+          minimize: !isDevelopment,
+          plugins: [
+            tailwindcss({
+              content: [inputFile]
+            }),
+            autoprefixer()
+          ]
         }),
         resolve({
           browser: true,
@@ -62,6 +88,9 @@ async function build() {
     });
 
     await bundle.close();
+    
+    // Clean up temp wrapper file
+    await import('fs').then(fs => fs.promises.unlink(tempWrapper));
     
     console.log(`✅ Successfully built ${inputName}`);
   } catch (error) {
