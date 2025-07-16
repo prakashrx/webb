@@ -7,12 +7,12 @@ namespace WebUI.Core.Api;
 [ClassInterface(ClassInterfaceType.AutoDual)]
 public class IpcApi
 {
-    private readonly string _extensionId;
-    private readonly IpcTransport _ipc;
+    private readonly string _panelId;
+    private readonly IpcRouter _ipc;
 
-    public IpcApi(string extensionId, IpcTransport ipc)
+    public IpcApi(string panelId, IpcRouter ipc)
     {
-        _extensionId = extensionId;
+        _panelId = panelId;
         _ipc = ipc;
     }
 
@@ -32,16 +32,16 @@ public class IpcApi
             }
         }
 
-        _ipc.Send(type, parsedPayload);
+        _ipc.SendAsync(type, parsedPayload);
     }
 
     public string On(string type, string handlerName)
     {
         var handlerId = Guid.NewGuid().ToString();
-        _ipc.RegisterHandler(type, handlerId, payload =>
+        _ipc.On(type, async (dynamic payload) =>
         {
             // Call JavaScript handler by name
-            InvokeJavaScriptHandler(handlerName, payload);
+            await Task.Run(() => InvokeJavaScriptHandler(handlerName, payload?.ToString() ?? string.Empty));
         });
         return handlerId; // Return for cleanup
     }
@@ -61,7 +61,7 @@ public class IpcApi
             }
         }
 
-        _ipc.Send($"broadcast.{type}", parsedPayload);
+        _ipc.BroadcastAsync(type, parsedPayload);
     }
 
     private void InvokeJavaScriptHandler(string handlerName, string payload)

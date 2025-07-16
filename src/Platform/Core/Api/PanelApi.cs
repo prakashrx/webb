@@ -8,14 +8,12 @@ namespace WebUI.Core.Api;
 [ClassInterface(ClassInterfaceType.AutoDual)]
 public class PanelApi
 {
-    private readonly string _extensionId;
-    private readonly IpcTransport _ipc;
+    private readonly IpcRouter _ipc;
     private readonly Dictionary<string, string> _registeredViews = new();
     private readonly BrowserWindow? _browserWindow;
 
-    public PanelApi(string extensionId, IpcTransport ipc, BrowserWindow? browserWindow = null)
+    public PanelApi(IpcRouter ipc, BrowserWindow? browserWindow = null)
     {
-        _extensionId = extensionId;
         _ipc = ipc;
         _browserWindow = browserWindow;
     }
@@ -23,9 +21,8 @@ public class PanelApi
     public void RegisterView(string panelId, string url)
     {
         _registeredViews[panelId] = url;
-        _ipc.Send("panel.register", new
+        _ipc.SendAsync("panel.register", new
         {
-            extensionId = _extensionId,
             panelId,
             url
         });
@@ -33,34 +30,25 @@ public class PanelApi
 
     public void Open(string panelId)
     {
-        if (!_registeredViews.ContainsKey(panelId))
+        Console.WriteLine($"[PanelApi] Open called with panelId: {panelId}");
+        
+        // Send message to open a panel
+        // This will be handled by WindowManager via IpcRouter
+        _ipc.SendAsync("panel.open", new
         {
-            throw new InvalidOperationException($"Panel '{panelId}' not registered");
-        }
-
-        _ipc.Send("panel.open", new
-        {
-            extensionId = _extensionId,
-            panelId
+            PanelId = panelId
         });
-    }
-
-    public void ClosePanel(string panelId)
-    {
-        _ipc.Send("panel.close", new
-        {
-            extensionId = _extensionId,
-            panelId
-        });
+        
+        Console.WriteLine($"[PanelApi] Sent panel.open message for: {panelId}");
     }
 
     public string On(string eventType, string handlerName)
     {
         var handlerId = Guid.NewGuid().ToString();
-        _ipc.RegisterHandler($"panel.{eventType}", handlerId, payload =>
+        _ipc.On($"panel.{eventType}", async (dynamic payload) =>
         {
             // Call JavaScript handler by name
-            InvokeJavaScriptHandler(handlerName, payload);
+            await Task.Run(() => InvokeJavaScriptHandler(handlerName, payload?.ToString() ?? string.Empty));
         });
         return handlerId; // Return for cleanup
     }
@@ -92,7 +80,25 @@ public class PanelApi
 
     public void Close()
     {
+        // Close current panel/window
         _browserWindow?.Close();
+    }
+    
+    public void Close(string panelId)
+    {
+        if (string.IsNullOrEmpty(panelId))
+        {
+            // If no panel ID provided, close current window
+            Close();
+        }
+        else
+        {
+            // Send IPC message to close a specific panel
+            _ipc.SendAsync("panel.close", new
+            {
+                PanelId = panelId
+            });
+        }
     }
 
     public bool IsMaximized()

@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-WebUI Platform is a VS Code-style extensible desktop shell for building real-time trading applications. It provides a minimal C# runtime with WebView2-based panels and a clean JavaScript API for extensions.
+WebUI Platform is a VS Code-style extensible desktop shell for building real-time trading applications. It provides a minimal C# runtime with WebView2-based panels and a clean JavaScript API for panels.
 
-**Current Status**: Foundation implementation complete with WebView2 hosting and window management. Ready for core API and extension system implementation.
+**Current Status**: Panel system fully implemented with working IPC communication between JavaScript and C#. Main toolbar and settings panels functional with simplified architecture.
 
 ## Build Commands
 
@@ -27,64 +27,67 @@ dotnet build WebUI.Core/WebUI.Core.csproj
 ### UI Components (Svelte)
 ```bash
 # Install dependencies
-cd WebUI/UIComponents
+cd src/UI/workbench
 npm install
 
-# Development server with hot reload
-npm run dev
-
-# Production build
+# Build all panels
 npm run build
+
+# Clean build artifacts
+npm run clean
 ```
 
 ## Architecture Overview
 
 ### Core Components
-- **Workbench** (`WebUI.Workbench`): Main application entry point and window lifecycle management
-- **Core** (`WebUI.Core`): Platform libraries for WebView2, window management, and native OS integration
-- **Core UI** (`WebUI/ui/core`): Built-in Svelte/Tailwind UI components (toolbar, settings, panel containers)
-- **Extensions** (`WebUI/extensions`): External plugins that run inside panel containers
-- **WebUI API** (`WebUI/webui-api`): TypeScript API library providing native UI capabilities
+- **Workbench** (`src/Workbench`): Main application entry point and window lifecycle management
+- **Core** (`src/Platform/Core`): Platform libraries for WebView2, window management, and panel APIs
+- **Panels** (`src/UI/workbench/panels`): Built-in Svelte panels (main-toolbar, settings, workspace)
+- **WebUI API** (`src/UI/api`): TypeScript API library providing `webui.panel` and `webui.ipc` namespaces
 
 ### Key Classes  
-- **WorkbenchEntry** (`WebUI.Workbench/WorkbenchEntry.cs`): Creates main application window and initializes core UI
-- **BrowserWindow** (`WebUI.Core/Windows/BrowserWindow.cs`): Clean WebView2 wrapper (no extension knowledge)
-- **WebViewHost** (`WebUI.Core/Windows/WebViewHost.cs`): WebView2 hosting infrastructure with COM integration
-- **ExtensionHost** (`WebUI.Core/Extensions/ExtensionHost.cs`): Manages extension loading and lifecycle
-- **HostApiBridge** (`WebUI.Core/Api/HostApiBridge.cs`): COM bridge exposing native APIs to JavaScript
+- **WorkbenchEntry** (`src/Workbench/WorkbenchEntry.cs:53`): Creates frameless main toolbar window and initializes panels
+- **WindowManager** (`src/Platform/Core/Windows/WindowManager.cs`): Manages all panels with IPC routing
+- **Panel** (`src/Platform/Core/Panels/Panel.cs`): WebView2-based panel implementation
+- **IpcRouter** (`src/Platform/Core/Communication/IpcRouter.cs`): Simplified message routing without double-wrapping
+- **HostApiBridge** (`src/Platform/Core/Api/HostApiBridge.cs`): COM bridge exposing Panel and IPC APIs to JavaScript
 
-### UI Architecture
-The platform has a clear separation between core UI and extensions:
-- **Core UI**: Built-in application shell (toolbar, settings, panel containers) using Svelte/Tailwind
-- **Extensions**: External code that runs inside panel containers, isolated from core UI
-- **Panel System**: Extensions render content inside panels with native chrome (title bar, tabs, etc.)
-- **WebUI API**: Provides native UI patterns (context menus, dialogs, notifications) to both core and extensions
-- **Extension Contributions**: Extensions can contribute commands, menus, settings via API
+### Panel-Based Architecture
+The platform uses a clean panel-based architecture:
+- **Panels**: Self-contained UI modules built with Svelte and bundled with Rollup
+- **IPC Communication**: Panels communicate via `webui.ipc` for inter-panel messaging
+- **Panel Management**: WindowManager handles panel lifecycle and registration
+- **WebUI API**: Global JavaScript API injected into all panels for platform access
+- **Virtual Host**: Panels served from `http://webui.local/` with filesystem mapping
 
 ## Current Implementation Status
 
 ### ✅ Completed
-- **WebView2 Infrastructure**: BrowserWindow and WebViewHost with proper initialization, events, and lifecycle management
-- **Screen Abstraction**: IScreen, Screen, ScreenOptions, and ScreenManager for managing multiple WebView2 windows
-- **COM API Bridge**: HostApiBridge, PanelApi, and IpcApi for JavaScript ↔ C# communication  
-- **WebUI JavaScript API**: Complete TypeScript API (`webui.panel`, `webui.ipc`, `webui.extension`) with bundled distribution
-- **Workbench UI**: Svelte-based UI components (MainToolbar, Settings) that run as built-in parts of the Workbench
-- **Working Application**: Functional multi-screen application with toolbar, settings, and workspace screens
+- **WebView2 Infrastructure**: Clean BrowserWindow wrapper with proper lifecycle management
+- **Panel System**: Complete panel abstraction with IPanel interface and Panel implementation
+- **Window Manager**: Central manager for all panels with IPC routing integration
+- **IPC Communication**: Simplified IpcRouter and IpcTransport without double-wrapping
+- **COM API Bridge**: HostApiBridge exposing PanelApi and IpcApi to JavaScript
+- **WebUI JavaScript API**: TypeScript API with `webui.panel` and `webui.ipc` namespaces
+- **Panel Build System**: Rollup configuration for self-contained panel bundles with CSS injection
+- **Working Panels**: Main toolbar, settings, and workspace panels all functional
 
 ### 🔄 Current Architecture
-- **Core Framework** (`WebUI.Core`):
-  - Provides Screen abstraction for creating/managing WebView2 windows
-  - Handles WebUI API injection via `AddScriptToExecuteOnDocumentCreatedAsync`
-  - Virtual host mapping for serving UI assets
-  - IPC infrastructure for communication
-- **Workbench Application** (`WebUI.Workbench`):
-  - Uses Core framework to create application screens
-  - Workbench UI components are built-in (not extensions)
-  - Manages screen lifecycle and inter-screen communication
+- **Core Framework** (`src/Platform/Core`):
+  - Panel abstraction for creating/managing WebView2 windows
+  - WindowManager for centralized panel lifecycle and IPC routing
+  - WebUI API injection via WebView2 initialization
+  - Virtual host mapping at `http://webui.local/`
+  - Simplified IPC with direct message routing (no double-wrapping)
+- **Workbench Application** (`src/Workbench`):
+  - Creates main toolbar as frameless window
+  - Registers all panels with WindowManager
+  - Handles panel open/close via IPC messages
 - **UI Structure**:
-  - `src/UI/workbench/` - Contains Workbench UI components
+  - `src/UI/workbench/panels/` - Svelte panel components
+  - `src/UI/workbench/dist/` - Built panel bundles
   - `src/UI/api/` - WebUI JavaScript API library
-  - Clear separation between platform and application UI
+  - Self-contained panels with embedded CSS
 
 ## Development Guidelines
 
@@ -95,73 +98,76 @@ The platform has a clear separation between core UI and extensions:
 - Use existing .NET APIs rather than reinventing
 - Target .NET 9.0 with Windows Forms and WebView2
 
-### Extension Development  
-- Extensions are manifest-based with `activate(context)` lifecycle
-- Core extensions load from disk, user extensions from HTTP
-- Panel isolation via iframes with extension identity in query params
-- Clean separation between platform APIs and extension code
+### Panel Development  
+- Panels are self-contained Svelte components
+- Built with Rollup for single-file output with embedded CSS
+- Register via `webui.panel.registerPanel(id, component)`
+- Communicate via `webui.ipc.send()` and `webui.ipc.on()`
+- Access platform features through WebUI API
 
-## Project Architecture Considerations
+## Notes for Development
 
-### Framework Foundation Considerations
-- Before thinking about extension we need a solid webUI foundation with ability to load multiple web UI screens. This foundation needs to be present in the core framework. The workbench uses the core framework to provide all our web UI screens.
+### Workflow Notes
+- **Build Process**:
+  - Dont try to run the app yourself, I will run and report back the result. But you should build and see if there is no error
 
 ## Testing and Validation
 
-### Current Demo
+### Running the Application
 ```bash
-cd WebUI/Workbench
+cd src/Workbench
 dotnet run
 ```
-Launches frameless browser window (1200x40) with main-toolbar extension. Demonstrates:
-- Extension loading via `extension://core/main-toolbar` 
-- Svelte component registration and mounting
-- WebUI API injection and global availability
-- Window controls (minimize, maximize, close) from JavaScript
+Launches frameless main toolbar (1200x40) with working panels:
+- Click "Settings" to open settings panel
+- Click "Workspace" to open workspace panel  
+- All panels have minimize/maximize/close controls
+- IPC communication working between panels
+- WebUI API available globally in all panels
 
-### Architecture Refactor Plan
+### Recent Accomplishments
 
-**New Vision:**
-1. **Core UI is NOT Extensions** - Toolbar, settings, panel containers are built-in Svelte components
-2. **Extensions Run IN Panels** - Extensions provide content, not chrome/containers
-3. **Native UI Patterns** - WebUI API provides context menus, dialogs that feel native
-4. **Clean Separation** - Core UI has full platform access, extensions are sandboxed
+**Completed Refactoring:**
+1. ✅ **Removed Extension Model** - Cleaned up all "extension" and "screen" terminology
+2. ✅ **Implemented Panel System** - Clean panel-based architecture with IPanel interface  
+3. ✅ **Fixed IPC Communication** - Removed double-wrapping, messages flow correctly
+4. ✅ **Rollup Build System** - Self-contained panel bundles with embedded CSS
+5. ✅ **Working Multi-Panel App** - Main toolbar opens settings and workspace panels
+6. ✅ **Simplified Architecture** - WindowManager handles all panels with single IpcRouter
 
-**Implementation Steps:**
-1. **Restructure UI Code** - Move toolbar/settings from extensions/ to ui/core/
-2. **Create Panel Container** - Core UI component that hosts extension content
-3. **Enhance WebUI API** - Add native UI capabilities (context menus, file dialogs, etc.)
-4. **Simplify Extension Loading** - Extensions just mount content, no chrome responsibility
-5. **Implement IPC Router** - Message passing between extensions and core
-6. **Add Dev Mode** - Hot reload for both core UI and extensions
-
-**Goal**: VS Code-like architecture where core UI provides the shell and extensions add functionality within that shell.
+**Key Improvements:**
+- Changed from Vite to Rollup for proper self-contained builds
+- Fixed case sensitivity issues in panel file names
+- Removed unnecessary RouterMessage wrapper in IPC system
+- All panels now successfully open and communicate via IPC
 
 ## Key Files and Locations
 
 ### Core Implementation
-- `WebUI/Core/Windows/` - WebView2 hosting and window management
-- `WebUI/Shared/Contracts/` - API interface definitions
-- `WebUI/Workbench/WorkbenchEntry.cs` - Main application entry point
+- `src/Platform/Core/Windows/` - WindowManager and BrowserWindow classes
+- `src/Platform/Core/Panels/` - Panel abstraction and implementation
+- `src/Platform/Core/Communication/` - IpcRouter and IpcTransport
+- `src/Platform/Core/Api/` - HostApiBridge, PanelApi, and IpcApi
+- `src/Workbench/WorkbenchEntry.cs` - Main application entry point
+
+### UI Implementation
+- `src/UI/workbench/panels/` - Svelte panel source files
+- `src/UI/workbench/dist/` - Built panel bundles
+- `src/UI/api/` - WebUI JavaScript API
+- `src/UI/workbench/rollup.config.js` - Build configuration
 
 ### Configuration
-- `WebUI/WebUI.Platform.sln` - Main solution file
-- `WebUI/UIComponents/package.json` - Svelte build configuration
-- `.cursor/rules/` - Development rules and conventions
-
-### Documentation
-- `WebUI/PROJECT_STRUCTURE.md` - Detailed architecture documentation
-- `.cursor/memory/poc-tasks.md` - POC implementation plan
-- `.cursor/memory/implementation-tasks.md` - Detailed task breakdown
+- `src/WebUI.Platform.sln` - Main solution file
+- `src/UI/workbench/package.json` - Panel build scripts
 
 ## Architecture Principles
 
-1. **Clear UI Separation**: Core UI (toolbar, settings, panel chrome) is built-in, not extensions
-2. **Extension Isolation**: Extensions run inside panel containers, can't modify core UI directly
-3. **Native UI Patterns**: WebUI API enables native-feeling UIs (context menus, dialogs, etc.)
-4. **HTTP-Served Extensions**: User extensions served from development servers for hot reload
-5. **Central IPC Routing**: All extension communication flows through the workbench
-6. **Modern Development**: Vite + Svelte + TypeScript for both core UI and extensions
+1. **Panel-Based Design**: Everything is a panel with its own WebView2 window
+2. **Simplified IPC**: Direct message routing without unnecessary wrapping
+3. **Self-Contained Bundles**: Panels built as single JS files with embedded CSS
+4. **Central Management**: WindowManager handles all panel lifecycle and routing
+5. **Clean API Surface**: Simple `webui.panel` and `webui.ipc` namespaces
+6. **Modern Stack**: Rollup + Svelte + TypeScript for panel development
 
 ## Common Patterns
 
@@ -182,13 +188,30 @@ public class HostApiBridge
 }
 ```
 
-### Extension Loading Pattern (Planned)
+### Panel Registration Pattern
 ```javascript
-// Extension activate function
-export function activate(context) {
-    context.panel.registerView("main", "http://localhost:3001/panel.html");
-    context.ipc.on("refresh", handleRefresh);
-}
+// In panel's main.js
+import PanelComponent from './MyPanel.svelte';
+
+webui.panel.registerPanel('my-panel', PanelComponent, {
+    title: 'My Panel'
+});
+
+// Open another panel
+webui.panel.open('settings');
+
+// Listen for IPC messages
+webui.ipc.on('data-update', (data) => {
+    console.log('Received:', data);
+});
 ```
 
-This codebase represents a solid foundation ready for the core API and extension system implementation outlined in the POC tasks.
+## Next Steps
+
+With the panel system working, the next phase would include:
+1. **Enhanced UI Components**: Status bar, side panels, docking support
+2. **Advanced IPC**: Request/response patterns, event subscriptions
+3. **Panel Persistence**: Save/restore panel layouts and states
+4. **Developer Tools**: Hot reload support, better debugging
+5. **Extended API**: File operations, notifications, context menus
+6. **Performance**: WebView2 pooling, lazy loading, shared processes

@@ -12,6 +12,7 @@ public sealed class WebViewHost : IWebViewHost, IDisposable
 {
     private readonly WebView2 _webView = new();
     private readonly Dictionary<string, object> _hostObjects = [];
+    private TaskCompletionSource<bool>? _coreWebView2Ready;
     private bool _isInitialized;
     private bool _isDisposed;
 
@@ -20,7 +21,11 @@ public sealed class WebViewHost : IWebViewHost, IDisposable
     public event EventHandler? WebViewReady;
     public event EventHandler<string>? MessageReceived;
 
-    public WebViewHost() => SetupWebViewEvents();
+    public WebViewHost()
+    {
+        _coreWebView2Ready = new TaskCompletionSource<bool>();
+        SetupWebViewEvents();
+    }
 
     public async Task InitializeAsync(WebViewOptions options)
     {
@@ -101,11 +106,18 @@ public sealed class WebViewHost : IWebViewHost, IDisposable
 
     private void OnCoreWebView2InitializationCompleted(object? sender, CoreWebView2InitializationCompletedEventArgs e)
     {
-        if (!e.IsSuccess) return;
+        if (!e.IsSuccess)
+        {
+            _coreWebView2Ready?.TrySetException(new InvalidOperationException("CoreWebView2 initialization failed"));
+            return;
+        }
 
         _webView.CoreWebView2.WebMessageReceived += OnWebMessageReceived;
         _webView.CoreWebView2.WindowCloseRequested += OnWindowCloseRequested;
         _webView.CoreWebView2.NewWindowRequested += OnNewWindowRequested;
+        
+        // Signal that CoreWebView2 is fully ready
+        _coreWebView2Ready?.TrySetResult(true);
     }
 
     private void OnNavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
@@ -170,6 +182,41 @@ public sealed class WebViewHost : IWebViewHost, IDisposable
     {
         if (!_isInitialized)
             throw new InvalidOperationException("WebView has not been initialized. Call InitializeAsync first.");
+    }
+    
+    /// <summary>
+    /// Set up virtual host mapping for serving local files
+    /// </summary>
+    public async Task SetVirtualHostMappingAsync(string hostname, string folderPath)
+    {
+        EnsureInitialized();
+        
+        if (!Directory.Exists(folderPath))
+        {
+            throw new DirectoryNotFoundException($"Folder path not found: {folderPath}");
+        }
+        
+        // Wait for CoreWebView2 to be fully initialized
+        if (_coreWebView2Ready != null)
+        {
+            await _coreWebView2Ready.Task;
+        }
+        
+        try
+        {
+            _webView.CoreWebView2.SetVirtualHostNameToFolderMapping(
+                hostname,
+                folderPath,
+                CoreWebView2HostResourceAccessKind.Allow);
+                
+            Console.WriteLine($"Virtual host mapping set: {hostname} -> {folderPath}");
+        }
+        catch (InvalidCastException ex)
+        {
+            Console.WriteLine($"Warning: Virtual host mapping not supported by current WebView2 runtime: {ex.Message}");
+            Console.WriteLine("Please update WebView2 Runtime or use file:// URLs instead.");
+            throw;
+        }
     }
 
     public void Dispose()

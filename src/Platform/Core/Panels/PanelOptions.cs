@@ -1,12 +1,12 @@
-namespace WebUI.Core.Screens;
+namespace WebUI.Core.Panels;
 
 /// <summary>
-/// Configuration options for creating a screen
+/// Configuration options for creating a panel
 /// </summary>
-public class ScreenOptions
+public class PanelOptions
 {
     /// <summary>
-    /// Unique identifier for the screen
+    /// Unique identifier for the panel
     /// </summary>
     public required string Id { get; set; }
     
@@ -61,12 +61,18 @@ public class ScreenOptions
     public string? HtmlTemplate { get; set; }
     
     /// <summary>
-    /// Parent screen ID for modal/child windows
+    /// Parent panel ID for modal/child windows
     /// </summary>
-    public string? ParentScreenId { get; set; }
+    public string? ParentPanelId { get; set; }
     
     /// <summary>
-    /// Whether this screen should be modal
+    /// Whether this panel should be modal
     /// </summary>
     public bool IsModal { get; set; }
+    
+    /// <summary>
+    /// Base path for static content (HTML, JS, CSS files)
+    /// Used for virtual host mapping. If not specified, uses a default location.
+    /// </summary>
+    public string? ContentPath { get; set; }
 }

@@ -111,6 +111,15 @@ public sealed class BrowserWindow : IDisposable
     {
         await _initializationTask;
     }
+    
+    /// <summary>
+    /// Set up virtual host mapping for serving local files
+    /// </summary>
+    public async Task SetVirtualHostMappingAsync(string hostname, string folderPath)
+    {
+        await _initializationTask;
+        await _webViewHost.SetVirtualHostMappingAsync(hostname, folderPath);
+    }
 
     /// <summary>
     /// Show the browser window

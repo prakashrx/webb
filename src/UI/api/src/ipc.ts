@@ -1,5 +1,4 @@
 import { getBridge, generateUUID, safeJsonStringify } from './utils.js';
-import { extension } from './extension.js';
 import type { IpcMessage } from './types.js';
 
 /**
@@ -9,7 +8,7 @@ export class IpcManager {
   private handlers = new Map<string, string>();
 
   /**
-   * Send a message to the platform or other extensions
+   * Send a message to the platform or other panels
    */
   public send(type: string, payload?: any): void {
     const bridge = getBridge();
@@ -56,7 +55,7 @@ export class IpcManager {
   }
 
   /**
-   * Broadcast a message to all extensions
+   * Broadcast a message to all panels
    */
   public broadcast(type: string, payload?: any): void {
     const bridge = getBridge();

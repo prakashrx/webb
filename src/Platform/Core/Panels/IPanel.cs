@@ -1,14 +1,14 @@
 using WebUI.Core.Hosting;
 
-namespace WebUI.Core.Screens;
+namespace WebUI.Core.Panels;
 
 /// <summary>
-/// Represents a screen that combines a browser window with WebUI API integration
+/// Represents a panel that combines a browser window with WebUI API integration
 /// </summary>
-public interface IScreen : IDisposable
+public interface IPanel : IDisposable
 {
     /// <summary>
-    /// Unique identifier for this screen
+    /// Unique identifier for this panel
     /// </summary>
     string Id { get; }
     
@@ -18,57 +18,57 @@ public interface IScreen : IDisposable
     BrowserWindow Window { get; }
     
     /// <summary>
-    /// Screen configuration options
+    /// Panel configuration options
     /// </summary>
-    ScreenOptions Options { get; }
+    PanelOptions Options { get; }
     
     /// <summary>
-    /// Whether the screen has been initialized
+    /// Whether the panel has been initialized
     /// </summary>
     bool IsInitialized { get; }
     
     /// <summary>
-    /// Initialize the screen asynchronously
+    /// Initialize the panel asynchronously
     /// </summary>
     Task InitializeAsync();
     
     /// <summary>
-    /// Show the screen
+    /// Show the panel
     /// </summary>
     void Show();
     
     /// <summary>
-    /// Hide the screen
+    /// Hide the panel
     /// </summary>
     void Hide();
     
     /// <summary>
-    /// Close the screen
+    /// Close the panel
     /// </summary>
     void Close();
     
     /// <summary>
-    /// Send a message to the screen's JavaScript context
+    /// Send a message to the panel's JavaScript context
     /// </summary>
     Task SendMessageAsync(string type, object? data = null);
     
     /// <summary>
-    /// Event raised when the screen is closed
+    /// Event raised when the panel is closed
     /// </summary>
     event EventHandler? Closed;
     
     /// <summary>
     /// Event raised when a message is received from JavaScript
     /// </summary>
-    event EventHandler<ScreenMessage>? MessageReceived;
+    event EventHandler<PanelMessage>? MessageReceived;
 }
 
 /// <summary>
-/// Message received from a screen's JavaScript context
+/// Message received from a panel's JavaScript context
 /// </summary>
-public class ScreenMessage
+public class PanelMessage
 {
     public required string Type { get; set; }
     public object? Data { get; set; }
-    public string ScreenId { get; set; } = string.Empty;
+    public string PanelId { get; set; } = string.Empty;
 }

@@ -3,28 +3,29 @@ using WebUI.Core.Api;
 using WebUI.Core.Communication;
 using WebUI.Core.Hosting;
 
-namespace WebUI.Core.Screens;
+namespace WebUI.Core.Panels;
 
 /// <summary>
-/// Default implementation of IScreen that combines BrowserWindow with WebUI API
+/// Default implementation of IPanel that combines BrowserWindow with WebUI API
 /// </summary>
-public class Screen : IScreen
+public class Panel : IPanel
 {
-    private readonly IpcTransport _ipcTransport;
+    private readonly IpcRouter _ipcRouter;
     private readonly HostApiBridge _hostApi;
     private bool _isDisposed;
 
     public string Id { get; }
     public BrowserWindow Window { get; }
-    public ScreenOptions Options { get; }
+    public PanelOptions Options { get; }
     public bool IsInitialized { get; private set; }
 
     public event EventHandler? Closed;
-    public event EventHandler<ScreenMessage>? MessageReceived;
+    public event EventHandler<PanelMessage>? MessageReceived;
 
-    public Screen(ScreenOptions options)
+    public Panel(PanelOptions options, IpcRouter ipcRouter)
     {
         Options = options ?? throw new ArgumentNullException(nameof(options));
+        _ipcRouter = ipcRouter ?? throw new ArgumentNullException(nameof(ipcRouter));
         Id = options.Id;
         
         // Create browser window with specified options
@@ -37,9 +38,8 @@ public class Screen : IScreen
             frameless: options.IsFrameless
         );
         
-        // Set up IPC and API bridge
-        _ipcTransport = new IpcTransport(Id);
-        _hostApi = new HostApiBridge(Id, _ipcTransport, Window);
+        // Set up API bridge
+        _hostApi = new HostApiBridge(Id, _ipcRouter, Window);
         
         // Wire up events
         Window.Closed += OnWindowClosed;
@@ -59,6 +59,20 @@ public class Screen : IScreen
         
         // Inject WebUI API JavaScript
         await InjectWebUIApiAsync();
+        
+        // Set up virtual host mapping if content path is provided
+        if (!string.IsNullOrEmpty(Options.ContentPath))
+        {
+            try
+            {
+                await Window.SetVirtualHostMappingAsync("webui.local", Options.ContentPath);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Warning: Could not set up virtual host mapping: {ex.Message}");
+                // Continue without virtual host mapping - the app can still work
+            }
+        }
         
         // Generate and load HTML
         var html = GenerateHtml();
@@ -105,7 +119,7 @@ public class Screen : IScreen
     public void Show()
     {
         if (!IsInitialized)
-            throw new InvalidOperationException("Screen must be initialized before showing");
+            throw new InvalidOperationException("Panel must be initialized before showing");
             
         Window.Show();
     }
@@ -126,7 +140,7 @@ public class Screen : IScreen
         {
             type,
             data,
-            screenId = Id
+            panelId = Id
         };
         
         var json = JsonSerializer.Serialize(message);
@@ -167,30 +181,31 @@ public class Screen : IScreen
                         if (event.data && event.data.type) {
                             // Forward to WebUI API if available
                             if (window.webui?.ipc?.send) {
-                                window.webui.ipc.send('screen.message', event.data);
+                                window.webui.ipc.send('panel.message', event.data);
                             }
                         }
                     });
                     
-                    // Load UI module
-                    import('{{baseUrl}}/dist/activate.js')
-                        .then(m => {
-                            if (m.activate) {
-                                m.activate();
-                                // Mount the specific panel if specified
-                                const panelId = '{{panelId}}';
-                                if (panelId !== 'default' && window.webui?.panel?.mountPanel) {
-                                    setTimeout(() => {
-                                        window.webui.panel.mountPanel(panelId, 'app');
-                                    }, 100);
-                                }
+                    // Load and mount the panel directly
+                    const panelId = '{{panelId}}';
+                    
+                    import('{{baseUrl}}/dist/{{panelId}}.js')
+                        .then(module => {
+                            // Mount the Svelte component
+                            if (module.default) {
+                                new module.default({
+                                    target: document.getElementById('app')
+                                });
+                                console.log(`Panel '${panelId}' mounted successfully`);
+                            } else {
+                                throw new Error('Panel module does not export a default component');
                             }
                         })
                         .catch(err => {
-                            console.error('Failed to load UI module:', err);
+                            console.error('Failed to load panel:', err);
                             document.getElementById('app').innerHTML = 
                                 `<div style="color: red; padding: 20px;">
-                                    <h3>Failed to load UI</h3>
+                                    <h3>Failed to load panel</h3>
                                     <p>${err.message}</p>
                                 </div>`;
                         });
@@ -203,21 +218,14 @@ public class Screen : IScreen
     private void SetupIpcHandlers()
     {
         // Handle messages from JavaScript
-        _ipcTransport.RegisterHandler("screen.message", "internal", (payload) =>
+        _ipcRouter.On<PanelMessage>("panel.message", async (message) =>
         {
-            try
+            if (message != null)
             {
-                var message = JsonSerializer.Deserialize<ScreenMessage>(payload);
-                if (message != null)
-                {
-                    message.ScreenId = Id;
-                    MessageReceived?.Invoke(this, message);
-                }
+                message.PanelId = Id;
+                MessageReceived?.Invoke(this, message);
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error handling screen message: {ex.Message}");
-            }
+            await Task.CompletedTask;
         });
     }
 

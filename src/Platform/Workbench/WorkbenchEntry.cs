@@ -1,12 +1,13 @@
 using System.Windows.Forms;
-using WebUI.Core.Screens;
+using WebUI.Core.Panels;
+using WebUI.Core.Windows;
 
 namespace WebUI.Workbench;
 
 public partial class WorkbenchEntry : Form
 {
-    private ScreenManager? _screenManager;
-    private IScreen? _mainToolbar;
+    private IPanel? _mainToolbar;
+    private WindowManager? _windowManager;
 
     public WorkbenchEntry()
     {
@@ -23,12 +24,19 @@ public partial class WorkbenchEntry : Form
             this.ShowInTaskbar = false;
             this.Visible = false;
             
-            // Create screen manager
-            _screenManager = new ScreenManager();
-            await _screenManager.InitializeAsync();
+            // Create WindowManager instance
+            _windowManager = new WindowManager();
             
-            // Create main toolbar screen
-            _mainToolbar = await _screenManager.CreateScreenAsync(new ScreenOptions
+            // Initialize WindowManager
+            // UI files are copied to "ui" subdirectory by MSBuild
+            var contentPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ui");
+            await _windowManager.InitializeAsync(contentPath);
+            
+            // Register panel definitions
+            RegisterPanelDefinitions();
+            
+            // Create main toolbar panel
+            _mainToolbar = await _windowManager.CreateAsync(new PanelOptions
             {
                 Id = "main-toolbar",
                 Title = "WebUI Platform",
@@ -42,32 +50,13 @@ public partial class WorkbenchEntry : Form
                 PanelId = "main-toolbar"
             });
             
-            // Handle screen closed event
-            _screenManager.ScreenClosed += (sender, e) =>
+            // Handle main toolbar closing - exit the app
+            _mainToolbar.Closed += (sender, e) =>
             {
-                if (e.ScreenId == "main-toolbar")
-                {
-                    // Close the application when the main toolbar closes
-                    Application.Exit();
-                }
+                Application.Exit();
             };
             
-            // Handle messages from screens
-            _screenManager.MessageReceived += (sender, message) =>
-            {
-                Console.WriteLine($"Message from {message.ScreenId}: {message.Type}");
-                
-                // Handle specific message types
-                switch (message.Type)
-                {
-                    case "open-settings":
-                        OpenSettingsScreen();
-                        break;
-                    case "open-workspace":
-                        OpenWorkspaceScreen();
-                        break;
-                }
-            };
+            // Messages are now handled by WindowManager via IPC
             
             // Show the main toolbar
             _mainToolbar.Show();
@@ -79,66 +68,26 @@ public partial class WorkbenchEntry : Form
         }
     }
     
-    private async void OpenSettingsScreen()
+    private void RegisterPanelDefinitions()
     {
-        try
+        // Register all available panels
+        _windowManager.RegisterPanel("settings", new PanelDefinition
         {
-            // Check if settings screen already exists
-            var settings = _screenManager?.GetScreen("settings");
-            if (settings != null)
-            {
-                settings.Show();
-                return;
-            }
-            
-            // Create new settings screen
-            settings = await _screenManager!.CreateScreenAsync(new ScreenOptions
-            {
-                Id = "settings",
-                Title = "Settings",
-                Width = 800,
-                Height = 600,
-                UiModule = "workbench",
-                PanelId = "settings"
-            });
-            
-            settings.Show();
-        }
-        catch (Exception ex)
+            Title = "Settings",
+            Width = 800,
+            Height = 600,
+            UiModule = "workbench",
+            PanelId = "settings"
+        });
+        
+        _windowManager.RegisterPanel("workspace", new PanelDefinition
         {
-            MessageBox.Show($"Error opening settings: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        }
-    }
-    
-    private async void OpenWorkspaceScreen()
-    {
-        try
-        {
-            // Check if workspace screen already exists
-            var workspace = _screenManager?.GetScreen("workspace");
-            if (workspace != null)
-            {
-                workspace.Show();
-                return;
-            }
-            
-            // Create new workspace screen
-            workspace = await _screenManager!.CreateScreenAsync(new ScreenOptions
-            {
-                Id = "workspace",
-                Title = "Workspace",
-                Width = 1400,
-                Height = 900,
-                UiModule = "workbench",
-                PanelId = "workspace"
-            });
-            
-            workspace.Show();
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"Error opening workspace: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        }
+            Title = "Workspace",
+            Width = 1400,
+            Height = 900,
+            UiModule = "workbench",
+            PanelId = "workspace"
+        });
     }
 
     private void InitializeComponent()
@@ -159,7 +108,7 @@ public partial class WorkbenchEntry : Form
     {
         if (disposing)
         {
-            _screenManager?.Dispose();
+            _windowManager?.Dispose();
         }
         base.Dispose(disposing);
     }

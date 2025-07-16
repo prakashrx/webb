@@ -1,5 +1,4 @@
 import { getBridge, generateUUID } from './utils.js';
-import { extension } from './extension.js';
 
 /**
  * Panel management and window controls
@@ -40,7 +39,7 @@ export class PanelManager {
    */
   public closePanel(id: string): void {
     const bridge = getBridge();
-    bridge.Panel.ClosePanel(id);
+    bridge.Panel.Close(id);
   }
 
   /**
@@ -108,11 +107,15 @@ export class PanelManager {
   }
 
   /**
-   * Close the window
+   * Close the current window or a specific panel
    */
-  public close(): void {
+  public close(panelId?: string): void {
     const bridge = getBridge();
-    bridge.Panel.Close();
+    if (panelId) {
+      bridge.Panel.Close(panelId);
+    } else {
+      bridge.Panel.Close();
+    }
   }
 
   /**
@@ -138,7 +141,7 @@ export class PanelManager {
   public mountPanel(panelId: string, containerId: string): void {
     const panels = (window as any).__webuiPanels;
     if (!panels || !panels.has(panelId)) {
-      throw new Error(`Panel '${panelId}' not registered. Did you call registerPanel() in your extension's activate function?`);
+      throw new Error(`Panel '${panelId}' not registered. Did you call registerPanel() first?`);
     }
 
     const container = document.getElementById(containerId);
@@ -151,9 +154,7 @@ export class PanelManager {
       // Mount as Svelte component
       new Component({
         target: container,
-        props: {
-          // Pass extension context if needed in future
-        }
+        props: {}
       });
       console.log(`Panel '${panelId}' mounted successfully`);
     } catch (error) {

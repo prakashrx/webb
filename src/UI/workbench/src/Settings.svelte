@@ -1,5 +1,5 @@
 <script>
-  import '../app.css';
+  import './tailwind.css';
   
   // Settings panel - stubbed for now
   

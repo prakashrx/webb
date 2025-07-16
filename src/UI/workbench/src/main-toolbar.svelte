@@ -1,11 +1,12 @@
 <script>
-  import '../app.css';
+  import './tailwind.css';
   
   // Main toolbar component for WebUI Platform
   
   function handleNewWorkspace() {
     console.log('New Workspace clicked');
-    // TODO: Implement workspace creation
+    // Open workspace panel via webui API
+    webui.panel.open('workspace');
   }
   
   function handleSettings() {
@@ -17,6 +18,11 @@
   function handleCommands() {
     console.log('Commands clicked');
     // TODO: Open command palette
+  }
+  
+  function openDevTools() {
+    console.log('Opening DevTools');
+    webui.panel.openDevTools();
   }
   
   function minimizeWindow() {
@@ -49,6 +55,9 @@
       </button>
       <button class="text-gray-600 text-xs px-3 py-1.5 rounded hover:bg-gray-200 hover:text-gray-800 transition-all" on:click={handleCommands}>
         Commands
+      </button>
+      <button class="text-gray-600 text-xs px-3 py-1.5 rounded hover:bg-gray-200 hover:text-gray-800 transition-all" on:click={openDevTools}>
+        DevTools
       </button>
     </nav>
   </div>

@@ -1,8 +1,7 @@
 // Type definitions for WebUI Platform API
 
-export interface ExtensionContext {
-  extensionId: string;
-  panelId?: string;
+export interface PanelContext {
+  panelId: string;
 }
 
 export interface PanelRegistration {
@@ -20,16 +19,15 @@ export interface IpcMessage {
 
 // COM Bridge interface (mirrors C# HostApiBridge)
 export interface HostApiBridge {
-  GetExtensionId(): string;
+  GetPanelId(): string;
   Panel: {
     RegisterView(id: string, url: string): void;
     Open(id: string): void;
-    ClosePanel(id: string): void;
+    Close(id?: string): void;
     On(eventType: string, handlerName: string): string;
     Minimize(): void;
     Maximize(): void;
     Restore(): void;
-    Close(): void;
     IsMaximized(): boolean;
     OpenDevTools(): void;
   };

@@ -1,18 +1,16 @@
 /**
  * WebUI Platform API
  * 
- * Clean, modern JavaScript API for WebUI Platform extensions.
- * Provides panel management, IPC communication, and extension utilities.
+ * Clean, modern JavaScript API for WebUI Platform.
+ * Provides panel management and IPC communication.
  */
 
-import { extension } from './extension.js';
 import { panel } from './panel.js';
 import { ipc } from './ipc.js';
 import { isBridgeAvailable } from './utils.js';
 
 // Main WebUI API object
 export const webui = {
-  extension,
   panel,
   ipc,
   
@@ -34,12 +32,12 @@ if (typeof window !== 'undefined') {
   
   // Log initialization
   if (isBridgeAvailable()) {
-    console.log(`WebUI API v${webui.version} initialized for extension: ${extension.getId()}`);
+    console.log(`WebUI API v${webui.version} initialized`);
   } else {
     console.warn('WebUI API initialized but bridge not available. Make sure this runs in a WebView2 context.');
   }
 }
 
 // Export for ES modules
-export { extension, panel, ipc };
+export { panel, ipc };
 export default webui;
