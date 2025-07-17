@@ -43,4 +43,29 @@
           WorkingDirectory="$(WebUIBuildToolsPath)"
           ConsoleToMSBuild="true" />
   </Target>
+
+  <!-- Watch target - only compiles panels, doesn't build the project -->
+  <Target Name="CompilePanelsOnly" 
+          DependsOnTargets="CheckNodeJS;RestoreWebUITools"
+          Condition="'@(Panel)' != ''">
+    <Message Text="🔄 Recompiling panels..." Importance="high" />
+    
+    <!-- Create output directory if needed -->
+    <MakeDir Directories="$(OutputPath)panels" />
+    
+    <!-- Compile each panel -->
+    <Exec Command="node build-panel.js &quot;%(Panel.FullPath)&quot; &quot;$(MSBuildProjectDirectory)\$(OutputPath)panels&quot; $(WebUIDevMode)"
+          WorkingDirectory="$(WebUIBuildToolsPath)"
+          ConsoleToMSBuild="true" />
+  </Target>
+
+  <!-- Friendly alias for watch mode -->
+  <Target Name="watch" DependsOnTargets="CompilePanelsOnly">
+    <Message Text="✅ Panels compiled. Watching for changes..." Importance="high" />
+  </Target>
+
+  <!-- Tell dotnet watch what files to monitor -->
+  <ItemGroup>
+    <Watch Include="**\*.svelte" />
+  </ItemGroup>
 </Project>

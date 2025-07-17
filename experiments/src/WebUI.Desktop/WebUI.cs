@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading;
 using System.Windows.Forms;
 using Microsoft.Web.WebView2.WinForms;
+using System.Diagnostics;
 
 namespace WebUI;
 
@@ -68,9 +69,45 @@ public static class WebUI
                 </body>
                 </html>
             ");
+            
+            // Set up hot reload in development
+            if (Directory.Exists(panelsPath))
+            {
+                SetupHotReload(webView, panelsPath, mainPanelName);
+            }
         };
         
         Application.Run(form);
+    }
+    
+    private static void SetupHotReload(WebView2 webView, string panelsPath, string panelName)
+    {
+        var watcher = new FileSystemWatcher(panelsPath)
+        {
+            Filter = $"{panelName}.js",
+            NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size
+        };
+        
+        System.Threading.Timer? debounceTimer = null;
+        
+        watcher.Changed += (sender, e) =>
+        {
+            // Debounce rapid changes
+            debounceTimer?.Dispose();
+            debounceTimer = new System.Threading.Timer(_ =>
+            {
+                // Reload on UI thread
+                webView.BeginInvoke(() =>
+                {
+                    Console.WriteLine($"🔄 Reloading {panelName}...");
+                    webView.Reload();
+                });
+            }, null, 100, Timeout.Infinite);
+        };
+        
+        watcher.EnableRaisingEvents = true;
+        Console.WriteLine($"🔥 Hot reload enabled for {panelName}");
+        Console.WriteLine($"💡 Run 'dotnet watch msbuild /t:watch' in another terminal to compile Svelte changes");
     }
     
     public static WebUIApp Create(string[] args)
