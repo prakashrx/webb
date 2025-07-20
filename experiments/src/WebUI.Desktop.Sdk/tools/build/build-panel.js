@@ -5,12 +5,16 @@ import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import terser from '@rollup/plugin-terser';
 import postcss from 'rollup-plugin-postcss';
+import alias from '@rollup/plugin-alias';
 import tailwindcss from 'tailwindcss';
 import autoprefixer from 'autoprefixer';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Path to pre-built WebUI API that ships with SDK
+const WEBUI_API_PATH = path.join(__dirname, 'webui-api.js');
 
 // Get command line arguments
 const args = process.argv.slice(2);
@@ -43,6 +47,14 @@ export default Component;
     const bundle = await rollup({
       input: tempWrapper,
       plugins: [
+        alias({
+          entries: [
+            { 
+              find: '@webui/api', 
+              replacement: WEBUI_API_PATH
+            }
+          ]
+        }),
         svelte({
           preprocess: sveltePreprocess({
             postcss: {

@@ -1,11 +1,26 @@
 using System;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using Microsoft.Web.WebView2.WinForms;
 using System.Diagnostics;
+using WebUI.Bridge;
+using WebUI.Commands;
 
 namespace WebUI;
+
+// Command argument classes
+public class EchoArgs
+{
+    public string Message { get; set; } = "";
+}
+
+public class AddNumbersArgs
+{
+    public int A { get; set; }
+    public int B { get; set; }
+}
 
 public static class WebUI
 {
@@ -31,6 +46,18 @@ public static class WebUI
         form.Load += async (s, e) =>
         {
             await webView.EnsureCoreWebView2Async();
+            
+            // Set up COM bridge
+            var bridge = new HostApiBridge(webView);
+            webView.CoreWebView2.AddHostObjectToScript("api", bridge);
+            
+            // Enable DevTools in debug mode
+            #if DEBUG
+            webView.CoreWebView2.Settings.AreDevToolsEnabled = true;
+            #endif
+            
+            // Register test commands
+            RegisterCommands();
             
             // Set up virtual host for serving files
             var panelsPath = Path.Combine(AppContext.BaseDirectory, "panels");
@@ -78,6 +105,30 @@ public static class WebUI
         };
         
         Application.Run(form);
+    }
+    
+    private static void RegisterCommands()
+    {
+        // Echo command - returns the message sent
+        CommandRegistry.Register<EchoArgs, string>("echo", async (args) =>
+        {
+            await Task.Delay(100); // Simulate some work
+            return $"Echo: {args.Message}";
+        });
+        
+        // Get time command - returns current time
+        CommandRegistry.Register<string>("get-time", async () =>
+        {
+            await Task.Delay(50);
+            return DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+        });
+        
+        // Add numbers command
+        CommandRegistry.Register<AddNumbersArgs, int>("add-numbers", async (args) =>
+        {
+            await Task.Delay(50);
+            return args.A + args.B;
+        });
     }
     
     private static void SetupHotReload(WebView2 webView, string panelsPath, string panelName)

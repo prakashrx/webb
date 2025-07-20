@@ -1,8 +1,31 @@
 <script>
+  import { invoke } from '@webui/api';
+  
   let count = 0;
+  let message = '';
+  let echoResult = '';
   
   function increment() {
     count += 1;
+  }
+  
+  async function testEcho() {
+    try {
+      const result = await invoke('echo', { message: `Hello from WebUI! Count: ${count}` });
+      echoResult = result;
+      message = `Received: ${result}`;
+    } catch (error) {
+      message = `Error: ${error.message}`;
+    }
+  }
+  
+  async function getTime() {
+    try {
+      const time = await invoke('get-time');
+      message = `Current time: ${time}`;
+    } catch (error) {
+      message = `Error: ${error.message}`;
+    }
   }
 </script>
 
@@ -15,4 +38,26 @@
   >
     Clicked {count} {count === 1 ? 'time' : 'times'}
   </button>
+  
+  <div class="mt-8 space-x-4">
+    <button 
+      on:click={testEcho}
+      class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+    >
+      Test Echo
+    </button>
+    
+    <button 
+      on:click={getTime}
+      class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+    >
+      Get Time
+    </button>
+  </div>
+  
+  {#if message}
+    <div class="mt-4 p-4 bg-gray-100 rounded">
+      {message}
+    </div>
+  {/if}
 </main>
