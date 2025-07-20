@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -10,17 +11,6 @@ using WebUI.Commands;
 
 namespace WebUI;
 
-// Command argument classes
-public class EchoArgs
-{
-    public string Message { get; set; } = "";
-}
-
-public class AddNumbersArgs
-{
-    public int A { get; set; }
-    public int B { get; set; }
-}
 
 public static class WebUI
 {
@@ -56,8 +46,15 @@ public static class WebUI
             webView.CoreWebView2.Settings.AreDevToolsEnabled = true;
             #endif
             
-            // Register test commands
-            RegisterCommands();
+            // Auto-register all command classes from the executing assembly
+            CommandRegistry.AutoRegister(Assembly.GetExecutingAssembly());
+            
+            // Also auto-register from the entry assembly (the app that's running)
+            var entryAssembly = Assembly.GetEntryAssembly();
+            if (entryAssembly != null && entryAssembly != Assembly.GetExecutingAssembly())
+            {
+                CommandRegistry.AutoRegister(entryAssembly);
+            }
             
             // Set up virtual host for serving files
             var panelsPath = Path.Combine(AppContext.BaseDirectory, "panels");
@@ -105,30 +102,6 @@ public static class WebUI
         };
         
         Application.Run(form);
-    }
-    
-    private static void RegisterCommands()
-    {
-        // Echo command - returns the message sent
-        CommandRegistry.Register<EchoArgs, string>("echo", async (args) =>
-        {
-            await Task.Delay(100); // Simulate some work
-            return $"Echo: {args.Message}";
-        });
-        
-        // Get time command - returns current time
-        CommandRegistry.Register<string>("get-time", async () =>
-        {
-            await Task.Delay(50);
-            return DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-        });
-        
-        // Add numbers command
-        CommandRegistry.Register<AddNumbersArgs, int>("add-numbers", async (args) =>
-        {
-            await Task.Delay(50);
-            return args.A + args.B;
-        });
     }
     
     private static void SetupHotReload(WebView2 webView, string panelsPath, string panelName)

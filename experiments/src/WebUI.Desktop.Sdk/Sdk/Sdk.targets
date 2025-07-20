@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <!-- Check if Node.js is available -->
-  <Target Name="CheckNodeJS" BeforeTargets="CompilePanels">
+  <Target Name="CheckNodeJS" BeforeTargets="CompilePanels;BuildWebUIApi">
     <Exec Command="node --version" 
           ConsoleToMSBuild="true" 
           IgnoreExitCode="true">
@@ -16,6 +16,22 @@
     
     <Error Condition="'$(NodeExitCode)' != '0'" 
            Text="Node.js is required to build WebUI panels. Please install Node.js from https://nodejs.org" />
+  </Target>
+
+  <!-- Build WebUI API if source is newer than output -->
+  <Target Name="BuildWebUIApi" 
+          BeforeTargets="RestoreWebUITools"
+          Condition="!Exists('$(WebUIBuildToolsPath)\webui-api.js') OR $([System.IO.File]::GetLastWriteTime('$(MSBuildThisFileDirectory)..\..\WebUI.Api\src\index.ts').Ticks) > $([System.IO.File]::GetLastWriteTime('$(WebUIBuildToolsPath)\webui-api.js').Ticks)">
+    <Message Text="🔨 Building WebUI API..." Importance="high" />
+    <Exec Command="npm install" 
+          WorkingDirectory="$(MSBuildThisFileDirectory)..\..\WebUI.Api"
+          Condition="!Exists('$(MSBuildThisFileDirectory)..\..\WebUI.Api\node_modules')" />
+    <Exec Command="npm run build" 
+          WorkingDirectory="$(MSBuildThisFileDirectory)..\..\WebUI.Api" />
+    <Copy SourceFiles="$(MSBuildThisFileDirectory)..\..\WebUI.Api\dist\webui-api.bundle.js"
+          DestinationFiles="$(WebUIBuildToolsPath)\webui-api.js" />
+    <Copy SourceFiles="$(MSBuildThisFileDirectory)..\..\WebUI.Api\dist\index.d.ts"
+          DestinationFiles="$(WebUIBuildToolsPath)\webui-api.d.ts" />
   </Target>
 
   <!-- Install npm packages if needed -->
