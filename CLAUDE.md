@@ -82,23 +82,29 @@ dotnet run
 
 ### ✅ Completed in Experimental SDK
 - Custom MSBuild SDK with Svelte compilation
-- Rollup-based build pipeline with ES modules
+- Rollup-based build pipeline with ES modules  
 - Automatic Tailwind CSS integration
 - Hot reload using dotnet watch + FileSystemWatcher
 - Virtual host serving (http://webui.local/)
 - Simple panel loading system
+- **Dynamic command discovery** - Convention-based `*Commands` classes
+- **TypeScript WebUI API** - Tree-shakable ES modules with `invoke()`
+- **Window management** - Minimize, maximize, title, state commands
+- **Clean separation** - Framework vs app commands
+- **Automated API build** - MSBuild handles WebUI.Api compilation
 
 ### 🔄 In Progress
-- Migrating IPC system from reference implementation
-- Adapting WebUI JavaScript API for new architecture
-- Creating project templates and tooling
+- **Multi-panel support** - Refactoring for multiple windows
+- **Builder pattern API** - `WebUI.CreateBuilder()` for configuration
+- **Message bus** - Inter-panel communication system
 
 ### 📋 Next Steps
-1. **IPC System**: Port the clean IPC design from reference
-2. **WebUI API**: Implement core panel and IPC methods
-3. **Advanced Features**: Window management, persistence
-4. **Documentation**: Full migration guide
-5. **Templates**: `dotnet new webui` support
+1. **Multi-Panel Architecture**: Support multiple windows/panels
+2. **Panel Navigation API**: `webui.panel.open()`, `webui.panel.close()`
+3. **Message Bus**: Pub/sub for panel communication
+4. **TypeScript Generation**: Auto-generate types from C# commands
+5. **Dialog API**: File open/save, message boxes
+6. **File System API**: Read/write files with permissions
 
 ## Reference Implementation (Original)
 
