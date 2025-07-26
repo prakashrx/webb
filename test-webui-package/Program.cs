@@ -6,6 +6,6 @@ class Program
     [STAThread]
     static void Main()
     {
-        WebUI.WebUI.Run("MainWindow");
+        WebUI.WebUI.Run("TestPanel");
     }
 }

@@ -8,25 +8,24 @@ WebUI is an experimental .NET library that brings the simplicity of WinForms and
 
 ## The Developer Experience
 
-### Getting Started - With Custom SDK
+### Getting Started
 
-WebUI is implemented as a custom .NET SDK, providing deep integration with MSBuild and a seamless development experience.
+WebUI is distributed as a single NuGet package that includes both the runtime library and build tools, providing a seamless development experience.
 
-**For Development (Relative Path SDK):**
+**Installation:**
 ```xml
-<Project Sdk="..\WebUI.Desktop.Sdk\Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net9.0-windows</TargetFramework>
   </PropertyGroup>
-</Project>
-```
-
-**For Production (NuGet SDK):**
-```xml
-<Project Sdk="WebUI.Desktop.Sdk/1.0.0">
-  <PropertyGroup>
-    <TargetFramework>net9.0-windows</TargetFramework>
-  </PropertyGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="WebUI.Desktop" Version="1.0.0" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Panel Include="MainWindow.svelte" />
+  </ItemGroup>
 </Project>
 ```
 
@@ -69,7 +68,7 @@ MyApp/
     └── SaveFile.svelte
 ```
 
-**Any structure works** - WebUI discovers all `.svelte` files automatically.
+**Any structure works** - just declare your Svelte files as `<Panel>` items in your project.
 
 ## Core Concepts
 
@@ -131,52 +130,55 @@ app.Run();
 
 ## Technical Architecture
 
-### Custom SDK Architecture
+### NuGet Package Architecture
 
-WebUI is implemented as a custom .NET SDK, providing seamless integration with the .NET build system.
+WebUI is distributed as a single NuGet package that includes both runtime and build tools, providing seamless integration with the .NET build system.
 
-**SDK Structure:**
+**Package Structure:**
 ```
-WebUI.Desktop.Sdk/
-├── Sdk/
-│   ├── Sdk.props          (imported at project start)
-│   ├── Sdk.targets        (imported at project end)
-│   └── Tasks/
-│       └── WebUI.Tasks.dll (custom MSBuild tasks)
-├── tools/
-│   ├── rollup/            (bundled Rollup configuration)
-│   └── node/              (Node.js scripts)
-└── lib/
-    └── net9.0/
-        └── WebUI.Desktop.dll (runtime libraries)
+WebUI.Desktop.nupkg
+├── lib/
+│   └── net9.0-windows/
+│       └── WebUI.Desktop.dll     (runtime library)
+├── build/
+│   ├── WebUI.Desktop.props       (MSBuild properties)
+│   └── WebUI.Desktop.targets     (build pipeline)
+└── tools/
+    ├── build/                    (Node.js build tools)
+    │   ├── build-panel.js       (Svelte compiler)
+    │   ├── base.css             (Tailwind base)
+    │   └── package.json         (dependencies)
+    └── WebUI.Api/               (TypeScript API source)
+        ├── src/
+        ├── package.json
+        └── rollup.config.js
 ```
 
 **Development Repository Structure:**
 ```
-WebUI/
+experiments/
 ├── src/
-│   ├── WebUI.Desktop.Sdk/
-│   │   └── Sdk/
-│   │       ├── Sdk.props
-│   │       └── Sdk.targets
-│   └── WebUI.Desktop/
-│       └── (runtime source code)
+│   ├── WebUI.Desktop/           (combined runtime + SDK)
+│   │   ├── build/              (MSBuild files)
+│   │   ├── tools/              (build tools)
+│   │   └── *.cs                (runtime code)
+│   └── WebUI.Api/              (TypeScript API)
+│       └── src/
 ├── samples/
-│   ├── HelloWorld/
-│   │   ├── HelloWorld.csproj → ../../src/WebUI.Desktop.Sdk/Sdk
-│   │   ├── Program.cs
-│   │   └── MainWindow.svelte
-│   └── ComplexApp/
-│       └── ComplexApp.csproj → ../../src/WebUI.Desktop.Sdk/Sdk
-└── WebUI.sln
+│   └── HelloWorld/
+│       ├── HelloWorld.csproj
+│       ├── Program.cs
+│       └── MainWindow.svelte
+└── packages/                   (local NuGet output)
 ```
 
-The SDK automatically:
+The package automatically:
 - Sets up proper output types and target frameworks
-- Includes WebView2 and other required packages
+- Includes WebView2 as a transitive dependency
 - Configures implicit usings for WebUI namespace
-- Discovers and compiles all .svelte files
+- Compiles declared `<Panel>` items
 - Manages the Node.js build pipeline transparently
+- Builds WebUI.Api on-demand from source
 
 ### Build Pipeline
 

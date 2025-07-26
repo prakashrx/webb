@@ -1,24 +1,31 @@
 # WebUI Desktop SDK Experiment - Status Report
 
 ## Overview
-We've successfully created an experimental .NET SDK that provides a WinForms-like simplicity for building desktop applications with Svelte and modern web technologies.
+We've successfully created an experimental desktop framework that provides WinForms-like simplicity for building applications with Svelte and modern web technologies. The framework is distributed as a single NuGet package containing both runtime and build tools.
 
 ## Current Implementation
 
 ### Core Features Implemented
-1. **Custom .NET SDK** (`WebUI.Desktop.Sdk`)
-   - MSBuild-based compilation pipeline
-   - Automatic Svelte → ES module compilation
-   - Integrated Tailwind CSS with PostCSS
-   - Zero-configuration development experience
+1. **Single NuGet Package Distribution** (`WebUI.Desktop`)
+   - Combined runtime library and build tools
+   - MSBuild props/targets flow automatically
+   - WebView2 included as transitive dependency
+   - WebUI.Api source included and built on-demand
 
-2. **Runtime Library** (`WebUI.Desktop`)
+2. **Runtime Library**
    - Simple API: `WebUI.Run("MainWindow")`
    - WebView2-based panel hosting
    - Virtual host mapping (http://webui.local/)
    - Built-in hot reload support
+   - Dynamic command discovery
 
-3. **Hot Reload System**
+3. **Build Pipeline**
+   - Automatic WebUI.Api compilation when needed
+   - Svelte → ES module compilation
+   - Integrated Tailwind CSS with PostCSS
+   - Zero-configuration development experience
+
+4. **Hot Reload System**
    - Uses `dotnet watch` for Svelte file monitoring
    - FileSystemWatcher for JS change detection
    - Browser refresh without app restart

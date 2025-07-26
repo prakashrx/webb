@@ -1,4 +1,4 @@
 <Project>
-  <!-- Import WebUI SDK for development -->
-  <Import Project="../src/WebUI.Desktop.Sdk/Sdk/Sdk.props" />
+  <!-- Import WebUI.Desktop props for all sample projects -->
+  <Import Project="$(MSBuildThisFileDirectory)..\src\WebUI.Desktop\build\WebUI.Desktop.props" />
 </Project>

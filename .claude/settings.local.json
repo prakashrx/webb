@@ -8,7 +8,10 @@
       "Bash(xcopy:*)",
       "Bash(powershell:*)",
       "Bash(dir:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(mkdir:*)",
+      "Bash(cp:*)",
+      "Bash(mv:*)"
     ],
     "deny": []
   }

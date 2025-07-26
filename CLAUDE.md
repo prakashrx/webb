@@ -4,14 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 🚀 IMPORTANT: Experimental SDK Transition
 
-**We are transitioning to a new architecture!** The `experiments/` directory contains our revolutionary WebUI.Desktop SDK that will replace the current implementation. This new approach provides a WinForms-like development experience with modern web technologies.
+**We are transitioning to a new architecture!** The `experiments/` directory contains our revolutionary WebUI.Desktop framework that will replace the current implementation. This new approach provides a WinForms-like development experience with modern web technologies, distributed as a single NuGet package.
 
-### Experimental SDK Highlights
+### Experimental Framework Highlights
 - **Simple API**: Just `WebUI.Run("MainWindow")` - no complex setup
 - **Automatic Compilation**: Svelte files compile transparently during build
 - **Integrated Tailwind**: CSS framework built-in with zero configuration  
 - **Hot Reload**: Edit Svelte files and see changes instantly without app restart
-- **MSBuild SDK**: Fully integrated with .NET tooling
+- **Single NuGet Package**: Complete framework with runtime and build tools in one package
 
 ### Migration Strategy
 We are gradually extracting the best parts of the reference implementation (current `src/` directory) and rebuilding them in the cleaner experimental architecture. The goal is to maintain the powerful features while drastically simplifying the developer experience.
@@ -25,7 +25,7 @@ The original WebUI Platform - a VS Code-style extensible desktop shell with:
 - Extensive JavaScript API
 - Trading application focus
 
-### Phase 2: Experimental SDK (New `experiments/` directory) ⭐
+### Phase 2: Experimental Framework (New `experiments/` directory) ⭐
 Our new direction - a general-purpose desktop framework that's as easy as WinForms:
 - **Zero-configuration** Svelte compilation
 - **Automatic** Tailwind CSS integration
@@ -37,10 +37,10 @@ Our new direction - a general-purpose desktop framework that's as easy as WinFor
 Bringing the best of both worlds:
 - Migrate IPC system from reference → experimental
 - Port WebUI JavaScript API incrementally  
-- Add advanced features (docking, persistence) to new SDK
+- Add advanced features (docking, persistence) to new framework
 - Deprecate old implementation once feature-complete
 
-## Working with the Experimental SDK
+## Working with the Experimental Framework
 
 ### Quick Start
 ```xml
@@ -49,6 +49,9 @@ Bringing the best of both worlds:
   <PropertyGroup>
     <TargetFramework>net9.0-windows</TargetFramework>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="WebUI.Desktop" Version="1.0.0" />
+  </ItemGroup>
   <ItemGroup>
     <Panel Include="MainWindow.svelte" />
   </ItemGroup>
@@ -74,14 +77,14 @@ dotnet run
 ### Key Improvements Over Reference
 1. **No manual build steps** - MSBuild handles everything
 2. **No npm scripts to run** - Integrated into .NET build
-3. **No complex setup** - Just reference the SDK
+3. **No complex setup** - Just reference the NuGet package
 4. **Standard tooling** - Uses dotnet CLI throughout
 5. **Instant feedback** - Hot reload without app restart
 
 ## Current Development Focus
 
-### ✅ Completed in Experimental SDK
-- Custom MSBuild SDK with Svelte compilation
+### ✅ Completed in Experimental Framework
+- Single NuGet package with integrated MSBuild targets for Svelte compilation
 - Rollup-based build pipeline with ES modules  
 - Automatic Tailwind CSS integration
 - Hot reload using dotnet watch + FileSystemWatcher
@@ -141,7 +144,7 @@ npm run build
 
 ## Development Guidelines
 
-### When Working on Experimental SDK
+### When Working on Experimental Framework
 1. **Keep it simple** - Avoid over-engineering
 2. **Use standard .NET patterns** - No custom abstractions
 3. **Maintain compatibility** - Think about migration path
@@ -158,18 +161,18 @@ npm run build
 
 ### For Experimental Development
 - Always test hot reload after changes
-- Keep the MSBuild SDK simple and maintainable
+- Keep the MSBuild targets simple and maintainable
 - Ensure Tailwind CSS continues to work automatically
 - Don't break the "zero configuration" promise
 
 ### For Migration Work
 - Study the reference implementation for ideas
-- But implement fresh in the experimental SDK
+- But implement fresh in the experimental framework
 - Focus on the 80% use case, not edge cases
 - Make the common case trivial, the complex case possible
 
 ## Summary
 
-We are building the future of .NET desktop development with web UI. The experimental SDK in `experiments/` is our north star - simple, powerful, and delightful to use. The reference implementation in `src/` provides the feature roadmap, but we're reimagining everything with a focus on developer experience.
+We are building the future of .NET desktop development with web UI. The experimental framework in `experiments/` is our north star - simple, powerful, and delightful to use. Distributed as a single NuGet package, it provides everything needed to build desktop apps with web technologies. The reference implementation in `src/` provides the feature roadmap, but we're reimagining everything with a focus on developer experience.
 
 **Remember**: If it's not as easy as WinForms, we're not done yet! 🚀

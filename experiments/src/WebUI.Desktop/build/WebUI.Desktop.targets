@@ -4,6 +4,9 @@
     <WebUIDevMode Condition="'$(Configuration)' == 'Debug'">true</WebUIDevMode>
     <WebUIDevMode Condition="'$(Configuration)' != 'Debug'">false</WebUIDevMode>
     <WebUIBuildToolsPath>$(MSBuildThisFileDirectory)..\tools\build</WebUIBuildToolsPath>
+    <!-- Try local development path first, then NuGet package path -->
+    <WebUIApiPath Condition="Exists('$(MSBuildThisFileDirectory)..\..\WebUI.Api')">$(MSBuildThisFileDirectory)..\..\WebUI.Api</WebUIApiPath>
+    <WebUIApiPath Condition="!Exists('$(MSBuildThisFileDirectory)..\..\WebUI.Api')">$(MSBuildThisFileDirectory)..\tools\WebUI.Api</WebUIApiPath>
   </PropertyGroup>
 
   <!-- Check if Node.js is available -->
@@ -18,20 +21,16 @@
            Text="Node.js is required to build WebUI panels. Please install Node.js from https://nodejs.org" />
   </Target>
 
-  <!-- Build WebUI API if source is newer than output -->
+  <!-- Build WebUI API if dist doesn't exist or source is newer -->
   <Target Name="BuildWebUIApi" 
-          BeforeTargets="RestoreWebUITools"
-          Condition="!Exists('$(WebUIBuildToolsPath)\webui-api.js') OR $([System.IO.File]::GetLastWriteTime('$(MSBuildThisFileDirectory)..\..\WebUI.Api\src\index.ts').Ticks) > $([System.IO.File]::GetLastWriteTime('$(WebUIBuildToolsPath)\webui-api.js').Ticks)">
+          BeforeTargets="BeforeBuild;RestoreWebUITools"
+          Condition="!Exists('$(WebUIApiPath)\dist\webui-api.bundle.js') OR $([System.IO.File]::GetLastWriteTime('$(WebUIApiPath)\src\index.ts').Ticks) > $([System.IO.File]::GetLastWriteTime('$(WebUIApiPath)\dist\webui-api.bundle.js').Ticks)">
     <Message Text="🔨 Building WebUI API..." Importance="high" />
     <Exec Command="npm install" 
-          WorkingDirectory="$(MSBuildThisFileDirectory)..\..\WebUI.Api"
-          Condition="!Exists('$(MSBuildThisFileDirectory)..\..\WebUI.Api\node_modules')" />
+          WorkingDirectory="$(WebUIApiPath)"
+          Condition="!Exists('$(WebUIApiPath)\node_modules')" />
     <Exec Command="npm run build" 
-          WorkingDirectory="$(MSBuildThisFileDirectory)..\..\WebUI.Api" />
-    <Copy SourceFiles="$(MSBuildThisFileDirectory)..\..\WebUI.Api\dist\webui-api.bundle.js"
-          DestinationFiles="$(WebUIBuildToolsPath)\webui-api.js" />
-    <Copy SourceFiles="$(MSBuildThisFileDirectory)..\..\WebUI.Api\dist\index.d.ts"
-          DestinationFiles="$(WebUIBuildToolsPath)\webui-api.d.ts" />
+          WorkingDirectory="$(WebUIApiPath)" />
   </Target>
 
   <!-- Install npm packages if needed -->
@@ -79,9 +78,4 @@
   <Target Name="watch" DependsOnTargets="CompilePanelsOnly">
     <Message Text="✅ Panels compiled. Watching for changes..." Importance="high" />
   </Target>
-
-  <!-- Tell dotnet watch what files to monitor -->
-  <ItemGroup>
-    <Watch Include="**\*.svelte" />
-  </ItemGroup>
 </Project>

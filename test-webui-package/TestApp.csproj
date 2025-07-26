@@ -4,10 +4,10 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <ProjectReference Include="..\..\src\WebUI.Desktop\WebUI.Desktop.csproj" />
+    <PackageReference Include="WebUI.Desktop" Version="1.0.0" />
   </ItemGroup>
   
   <ItemGroup>
-    <Panel Include="MainWindow.svelte" />
+    <Panel Include="TestPanel.svelte" />
   </ItemGroup>
 </Project>

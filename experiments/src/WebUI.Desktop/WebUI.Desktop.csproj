@@ -5,10 +5,36 @@
     <UseWindowsForms>true</UseWindowsForms>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
+    
+    <!-- NuGet Package Configuration -->
+    <PackageId>WebUI.Desktop</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>WebUI Team</Authors>
+    <Description>WebUI Desktop Framework - Build desktop apps with Svelte and .NET</Description>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <IncludeBuildOutput>true</IncludeBuildOutput>
+    <PackageOutputPath>..\..\packages</PackageOutputPath>
+    
+    <!-- Development Dependency = false so the library DLL is available to consumers -->
+    <DevelopmentDependency>false</DevelopmentDependency>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2739.15" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2739.15">
+      <PrivateAssets>none</PrivateAssets>
+    </PackageReference>
   </ItemGroup>
+
+  <!-- Include build files that will flow to referencing projects -->
+  <ItemGroup>
+    <None Include="build\**" Pack="true" PackagePath="build\" />
+    <None Include="tools\**" Pack="true" PackagePath="tools\" />
+    <!-- Include WebUI.Api source in the package -->
+    <None Include="..\WebUI.Api\**" Pack="true" PackagePath="tools\WebUI.Api\" Exclude="..\WebUI.Api\node_modules\**;..\WebUI.Api\dist\**" />
+  </ItemGroup>
+
+
+  <!-- Import build targets for WebUI.Desktop itself -->
+  <Import Project="build\WebUI.Desktop.targets" />
 
 </Project>

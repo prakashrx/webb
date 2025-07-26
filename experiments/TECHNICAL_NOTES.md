@@ -66,11 +66,11 @@ watcher.Changed += (sender, e) =>
 
 ## File Paths and Locations
 
-### SDK Files
-- Props: `src/WebUI.Desktop.Sdk/Sdk/Sdk.props`
-- Targets: `src/WebUI.Desktop.Sdk/Sdk/Sdk.targets`
-- Build script: `src/WebUI.Desktop.Sdk/tools/build/build-panel.js`
-- Base CSS: `src/WebUI.Desktop.Sdk/tools/build/base.css`
+### Build Files (Included in NuGet Package)
+- Props: `src/WebUI.Desktop/build/WebUI.Desktop.props`
+- Targets: `src/WebUI.Desktop/build/WebUI.Desktop.targets`
+- Build script: `src/WebUI.Desktop/tools/build/build-panel.js`
+- Base CSS: `src/WebUI.Desktop/tools/build/base.css`
 
 ### Output Structure
 ```

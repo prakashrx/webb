@@ -16,13 +16,18 @@
   </ItemGroup>
   -->
 
-  <!-- Reference WebUI runtime library -->
-  <ItemGroup Condition="'$(MSBuildProjectName)' != 'WebUI.Desktop'">
-    <ProjectReference Include="$(MSBuildThisFileDirectory)..\..\WebUI.Desktop\WebUI.Desktop.csproj" />
-  </ItemGroup>
-
   <!-- Add implicit using for WebUI (only for apps, not the library itself) -->
   <ItemGroup Condition="'$(MSBuildProjectName)' != 'WebUI.Desktop'">
     <Using Include="WebUI" />
   </ItemGroup>
+  
+  <!-- Watch Panel items for hot reload -->
+  <ItemGroup>
+    <Watch Include="@(Panel)" />
+  </ItemGroup>
+  
+  <!-- Define where tools are located in the package -->
+  <PropertyGroup>
+    <WebUIToolsPath>$(MSBuildThisFileDirectory)..\tools\</WebUIToolsPath>
+  </PropertyGroup>
 </Project>

@@ -10,11 +10,14 @@ import tailwindcss from 'tailwindcss';
 import autoprefixer from 'autoprefixer';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { existsSync } from 'fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Path to pre-built WebUI API that ships with SDK
-const WEBUI_API_PATH = path.join(__dirname, 'webui-api.js');
+// Path to WebUI API - try local development path first, then NuGet package path
+const localApiPath = path.join(__dirname, '..', '..', '..', 'WebUI.Api', 'dist', 'webui-api.bundle.js');
+const packageApiPath = path.join(__dirname, '..', 'WebUI.Api', 'dist', 'webui-api.bundle.js');
+const WEBUI_API_PATH = existsSync(localApiPath) ? localApiPath : packageApiPath;
 
 // Get command line arguments
 const args = process.argv.slice(2);
