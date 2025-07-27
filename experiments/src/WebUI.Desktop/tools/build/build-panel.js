@@ -14,10 +14,11 @@ import { existsSync } from 'fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Path to WebUI API - try local development path first, then NuGet package path
-const localApiPath = path.join(__dirname, '..', '..', '..', 'WebUI.Api', 'dist', 'webui-api.bundle.js');
-const packageApiPath = path.join(__dirname, '..', 'WebUI.Api', 'dist', 'webui-api.bundle.js');
-const WEBUI_API_PATH = existsSync(localApiPath) ? localApiPath : packageApiPath;
+// Path to WebUI API - now always in the same relative location
+const WEBUI_API_PATH = path.join(__dirname, '..', '..', 'Api', 'dist', 'webui-api.bundle.js');
+
+// Path to WebUI Components
+const WEBUI_COMPONENTS_PATH = path.join(__dirname, '..', '..', 'Components', 'src', 'index.js');
 
 // Get command line arguments
 const args = process.argv.slice(2);
@@ -55,6 +56,10 @@ export default Component;
             { 
               find: '@webui/api', 
               replacement: WEBUI_API_PATH
+            },
+            { 
+              find: '@webui/components', 
+              replacement: WEBUI_COMPONENTS_PATH
             }
           ]
         }),

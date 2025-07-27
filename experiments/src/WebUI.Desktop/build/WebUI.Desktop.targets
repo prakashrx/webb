@@ -4,9 +4,8 @@
     <WebUIDevMode Condition="'$(Configuration)' == 'Debug'">true</WebUIDevMode>
     <WebUIDevMode Condition="'$(Configuration)' != 'Debug'">false</WebUIDevMode>
     <WebUIBuildToolsPath>$(MSBuildThisFileDirectory)..\tools\build</WebUIBuildToolsPath>
-    <!-- Try local development path first, then NuGet package path -->
-    <WebUIApiPath Condition="Exists('$(MSBuildThisFileDirectory)..\..\WebUI.Api')">$(MSBuildThisFileDirectory)..\..\WebUI.Api</WebUIApiPath>
-    <WebUIApiPath Condition="!Exists('$(MSBuildThisFileDirectory)..\..\WebUI.Api')">$(MSBuildThisFileDirectory)..\tools\WebUI.Api</WebUIApiPath>
+    <!-- Api is now always in the same relative location -->
+    <WebUIApiPath>$(MSBuildThisFileDirectory)..\Api</WebUIApiPath>
   </PropertyGroup>
 
   <!-- Check if Node.js is available -->

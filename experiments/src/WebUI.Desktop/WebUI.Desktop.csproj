@@ -29,8 +29,10 @@
   <ItemGroup>
     <None Include="build\**" Pack="true" PackagePath="build\" />
     <None Include="tools\**" Pack="true" PackagePath="tools\" />
-    <!-- Include WebUI.Api source in the package -->
-    <None Include="..\WebUI.Api\**" Pack="true" PackagePath="tools\WebUI.Api\" Exclude="..\WebUI.Api\node_modules\**;..\WebUI.Api\dist\**" />
+    <!-- Include Api source in the package at root level -->
+    <None Include="Api\**" Pack="true" PackagePath="Api\" Exclude="Api\node_modules\**;Api\dist\**" />
+    <!-- Include Components source in the package at root level -->
+    <None Include="Components\**" Pack="true" PackagePath="Components\" />
   </ItemGroup>
 
 
