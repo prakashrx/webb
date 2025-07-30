@@ -11,19 +11,34 @@ using WebUI.Commands;
 
 namespace WebUI;
 
+public class WebUIOptions
+{
+    public int Width { get; set; } = 1024;
+    public int Height { get; set; } = 768;
+    public bool Frameless { get; set; } = true;
+    public bool CenterScreen { get; set; } = true;
+    public string? Title { get; set; }
+}
 
 public static class WebUI
 {
     public static void Run(string mainPanelName)
+    {
+        Run(mainPanelName, new WebUIOptions());
+    }
+    
+    public static void Run(string mainPanelName, WebUIOptions options)
     {
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
         
         var form = new Form
         {
-            Text = mainPanelName,
-            Width = 800,
-            Height = 600
+            Text = options.Title ?? mainPanelName,
+            Width = options.Width,
+            Height = options.Height,
+            FormBorderStyle = options.Frameless ? FormBorderStyle.None : FormBorderStyle.Sizable,
+            StartPosition = options.CenterScreen ? FormStartPosition.CenterScreen : FormStartPosition.WindowsDefaultLocation
         };
         
         var webView = new WebView2
@@ -45,6 +60,9 @@ public static class WebUI
             #if DEBUG
             webView.CoreWebView2.Settings.AreDevToolsEnabled = true;
             #endif
+            
+            // Enable non-client region support for draggable regions
+            webView.CoreWebView2.Settings.IsNonClientRegionSupportEnabled = true;
             
             // Auto-register all command classes from the executing assembly
             CommandRegistry.AutoRegister(Assembly.GetExecutingAssembly());

@@ -29,7 +29,17 @@ public class WindowCommands
     {
         await Task.Run(() =>
         {
-            _form.BeginInvoke(() => _form.WindowState = FormWindowState.Maximized);
+            _form.BeginInvoke(() => 
+            {
+                if (_form.WindowState == FormWindowState.Maximized)
+                {
+                    _form.WindowState = FormWindowState.Normal;
+                }
+                else
+                {
+                    _form.WindowState = FormWindowState.Maximized;
+                }
+            });
         });
     }
     
@@ -72,6 +82,14 @@ public class WindowCommands
                 FormWindowState.Maximized => new WindowState { IsMaximized = true },
                 _ => new WindowState { IsNormal = true }
             };
+        });
+    }
+    
+    public async Task Close()
+    {
+        await Task.Run(() =>
+        {
+            _form.BeginInvoke(() => _form.Close());
         });
     }
 }

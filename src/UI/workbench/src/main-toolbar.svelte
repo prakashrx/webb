@@ -37,8 +37,8 @@
     webui.panel.close();
   }
 </script>
-
-<div class="flex justify-between items-center h-10 bg-gray-50 border-b border-gray-200 px-4 select-none font-sans" style="-webkit-app-region: drag;">
+;
+<div class="flex justify-between items-center h-10 bg-gray-50 border-b border-gray-200 px-4 select-none font-sans" style="-webkit-app-region: drag">
   <!-- Left section: Branding and navigation -->
   <div class="flex items-center gap-6">
     <div class="flex items-center gap-2">

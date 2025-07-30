@@ -18,7 +18,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const WEBUI_API_PATH = path.join(__dirname, '..', '..', 'Api', 'dist', 'webui-api.bundle.js');
 
 // Path to WebUI Components
-const WEBUI_COMPONENTS_PATH = path.join(__dirname, '..', '..', 'Components', 'src', 'index.js');
+const WEBUI_COMPONENTS_PATH = path.join(__dirname, '..', '..', 'Components', 'index.js');
 
 // Get command line arguments
 const args = process.argv.slice(2);
