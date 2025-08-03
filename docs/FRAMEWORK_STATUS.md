@@ -1,7 +1,7 @@
 # WebUI Desktop SDK - Status Report
 
 ## Overview
-We've successfully created a desktop framework that provides WinForms-like simplicity for building applications with Svelte and modern web technologies. The framework is distributed as a single NuGet package containing both runtime and build tools.
+We've successfully created a desktop framework that provides WinForms-like simplicity for building applications with Svelte, TypeScript, and modern web technologies. The framework is distributed as a single NuGet package containing both runtime and build tools.
 
 ## Current Implementation
 
@@ -10,7 +10,7 @@ We've successfully created a desktop framework that provides WinForms-like simpl
    - Combined runtime library and build tools
    - MSBuild props/targets flow automatically
    - WebView2 included as transitive dependency
-   - WebUI.Api source included and built on-demand
+   - TypeScript API source included and compiled on-demand
 
 2. **Runtime Library**
    - Simple API: `WebUI.Run("MainWindow")`
@@ -111,6 +111,16 @@ src/
 - **Why**: Zero configuration, works transparently
 - **Implementation**: Build script creates temporary wrapper
 
+### 6. **TypeScript Support**
+- **Chose**: esbuild for TypeScript transformation
+- **Why**: Fast, reliable, no complex configuration needed
+- **Implementation**: Custom Rollup plugin using esbuild
+
+### 7. **NPM Package Management**
+- **Chose**: MSBuild `<NpmPackage>` items in .csproj
+- **Why**: Follows .NET conventions, no package.json needed in projects
+- **Implementation**: Merge utility combines all package.json sources
+
 ## Technical Challenges Solved
 
 1. **Double SDK Import Error**
@@ -129,12 +139,17 @@ src/
 5. **Timer Ambiguity**
    - Fully qualified `System.Threading.Timer`
 
+6. **TypeScript "export type" Parse Errors**
+   - Solved by using esbuild instead of @rollup/plugin-typescript
+   - esbuild handles TypeScript transformation without configuration issues
+
 ## What's Not Implemented Yet
 
-### 1. **WebUI JavaScript API**
+### 1. **Advanced WebUI JavaScript API**
 - Panel management (`webui.panel.open()`, etc.)
-- Window controls (minimize, maximize, close)
 - Panel lifecycle events
+- Inter-panel communication
+- Note: Basic window controls (minimize, maximize, close) and command invocation are already implemented.
 
 ### 2. **IPC Messaging System**
 - Inter-panel communication

@@ -5,14 +5,12 @@
   
   <ItemGroup>
     <ProjectReference Include="..\..\WebUI.Desktop\WebUI.Desktop.csproj" />
+
+    <!-- Npm package references -->
+    <NpmPackage Include="date-fns" Version="2.30.0" />
   </ItemGroup>
   
   <ItemGroup>
     <Panel Include="MainWindow.svelte" />
-  </ItemGroup>
-  
-  <ItemGroup>
-    <!-- Example npm package -->
-    <NpmPackage Include="date-fns" Version="2.30.0" />
   </ItemGroup>
 </Project>

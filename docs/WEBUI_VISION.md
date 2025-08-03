@@ -38,7 +38,12 @@ WebUI.Run("MainWindow");
 
 **MainWindow.svelte:**
 ```svelte
-<h1>Hello WebUI!</h1>
+<script lang="ts">
+  import { TitleBar } from '@webui/components';
+</script>
+
+<TitleBar title="Hello WebUI!" />
+<h1>Welcome to WebUI Desktop</h1>
 ```
 
 That's it. Run `dotnet run` and your desktop app launches. The SDK handles everything else automatically.
@@ -145,13 +150,14 @@ WebUI.Desktop.nupkg
 │   └── WebUI.Desktop.targets     (build pipeline)
 └── tools/
     ├── build/                    (Node.js build tools)
-    │   ├── build-panel.js       (Svelte compiler)
+    │   ├── build-panel.js       (Svelte/TypeScript compiler)
+    │   ├── merge-package-json.js (Package merger)
     │   ├── base.css             (Tailwind base)
     │   └── package.json         (dependencies)
-    └── WebUI.Api/               (TypeScript API source)
-        ├── src/
-        ├── package.json
-        └── rollup.config.js
+    └── Api/                     (TypeScript API source)
+        ├── core/
+        ├── types/
+        └── index.ts
 ```
 
 **Development Repository Structure:**
@@ -174,9 +180,11 @@ The package automatically:
 - Sets up proper output types and target frameworks
 - Includes WebView2 as a transitive dependency
 - Configures implicit usings for WebUI namespace
-- Compiles declared `<Panel>` items
+- Compiles declared `<Panel>` items with TypeScript support
 - Manages the Node.js build pipeline transparently
-- Builds WebUI.Api on-demand from source
+- Merges npm dependencies from .csproj `<NpmPackage>` items
+- Consolidates all node_modules in obj/webui directory
+- Provides IntelliSense for @webui/api and @webui/components
 
 ### Build Pipeline
 
@@ -192,7 +200,8 @@ The package automatically:
    - No runtime dependency on Node.js or npm packages
 
 3. **Auto-Injection**
-   - WebUI JavaScript API
+   - WebUI TypeScript API (@webui/api)
+   - Built-in components (@webui/components)
    - Tailwind CSS (purged automatically)
    - TypeScript definitions
    - Hot reload client (dev only)
@@ -234,12 +243,14 @@ The package automatically:
 ### Basic Panel
 ```svelte
 <!-- Settings.svelte -->
-<script>
-  let theme = 'dark';
+<script lang="ts">
+  import { invoke } from '@webui/api';
   
-  function save() {
-    webui.message.send('settings-updated', { theme });
-    webui.panel.close();
+  let theme: string = 'dark';
+  
+  async function save(): Promise<void> {
+    await invoke('settings.update', { theme });
+    await invoke('window.close');
   }
 </script>
 
@@ -306,20 +317,17 @@ const result = await webui.message.request('ProcessData', {
 - No manual refresh needed
 - State preserved when possible
 
-### TypeScript Support (Automatic)
+### TypeScript Support
+The framework provides full TypeScript support with type-safe command invocation:
 ```typescript
-// webui.d.ts is auto-generated
-interface WebUI {
-  panel: {
-    open(name: 'Settings' | 'About' | 'DataPanel', data?: any): void;
-    close(): void;
-  };
-  message: {
-    send<T>(type: string, data: T, target?: string): void;
-    on<T>(type: string, handler: (data: T) => void): void;
-    request<T, R>(type: string, data?: T): Promise<R>;
-  };
-}
+// Use the typed invoke function from @webui/api
+import { invoke } from '@webui/api';
+
+// Invoke commands with full type safety
+const result = await invoke('myCommand', { param1: 'value' });
+
+// Import built-in components
+import { TitleBar } from '@webui/components';
 ```
 
 ### Tailwind Integration (Automatic)
@@ -328,23 +336,14 @@ interface WebUI {
 - IntelliSense support in VS Code
 - Custom config via `webui.json` if needed
 
-### Adding Dependencies (Optional)
-When you need additional npm packages, add them to `webui.json`:
-```json
-{
-  "dependencies": {
-    "chart.js": "^4.0.0",
-    "date-fns": "^2.30.0",
-    "@tanstack/svelte-table": "^8.0.0"
-  },
-  "tailwind": {
-    "extend": {
-      "colors": {
-        "brand": "#007acc"
-      }
-    }
-  }
-}
+### Adding Dependencies
+When you need additional npm packages, add them directly to your .csproj file:
+```xml
+<ItemGroup>
+  <NpmPackage Include="chart.js" Version="4.0.0" />
+  <NpmPackage Include="date-fns" Version="2.30.0" />
+  <NpmPackage Include="@tanstack/svelte-table" Version="8.0.0" />
+</ItemGroup>
 ```
 
 The build system automatically:
@@ -383,20 +382,21 @@ The build system automatically:
 - [x] Message bus implementation
 - [x] Manual Svelte compilation
 
-### Phase 2: SDK Implementation (Current Focus)
-- [ ] Create custom .NET SDK structure
-- [ ] Implement Sdk.props and Sdk.targets
-- [ ] Custom MSBuild tasks for Svelte compilation
-- [ ] Node.js toolchain integration (dev-time only)
-- [ ] Auto-discovery of .svelte files
-- [ ] Resource embedding system
-- [ ] Development/Production modes
+### Phase 2: SDK Implementation ✓
+- [x] Create NuGet package with MSBuild integration
+- [x] Implement WebUI.Desktop.props and .targets
+- [x] Automatic Svelte/TypeScript compilation
+- [x] Node.js toolchain integration (dev-time only)
+- [x] Panel discovery via `<Panel>` items
+- [x] NPM package management via `<NpmPackage>` items
+- [x] TypeScript support with esbuild
+- [x] Built-in components (@webui/components)
 
 ### Phase 3: Developer Experience
-- [ ] Hot reload via WebSockets
-- [ ] Auto-generated TypeScript definitions
+- [ ] Hot reload via FileSystemWatcher
+- [ ] TypeScript API with full IntelliSense
 - [ ] Service proxy generation
-- [ ] VS Code extension for IntelliSense
+- [ ] VS Code extension for enhanced IntelliSense
 - [ ] Project templates
 
 ### Phase 4: Production Features
