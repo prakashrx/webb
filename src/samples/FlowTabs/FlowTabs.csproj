@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0-windows</TargetFramework>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\..\WebUI.Desktop\WebUI.Desktop.csproj" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Panel Include="MainWindow.svelte" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <NpmPackage Include="golden-layout" Version="2.6.0" />
+  </ItemGroup>
+</Project>

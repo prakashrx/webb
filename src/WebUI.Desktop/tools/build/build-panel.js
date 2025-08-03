@@ -9,6 +9,7 @@ import alias from '@rollup/plugin-alias';
 import typescript from '@rollup/plugin-typescript';
 import tailwindcss from 'tailwindcss';
 import autoprefixer from 'autoprefixer';
+import postcssImport from 'postcss-import';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { existsSync } from 'fs';
@@ -130,6 +131,12 @@ export default Component;
           minimize: !isDevelopment,
           config: false, // Don't load external config
           plugins: [
+            postcssImport({
+              path: [
+                path.join(msbuildProjectDir, 'obj', 'webui', 'node_modules'),
+                'node_modules'
+              ]
+            }),
             tailwindcss({
               content: [
                 inputFile,
@@ -142,7 +149,7 @@ export default Component;
           ]
         }),
         resolve({
-          extensions: ['.mjs', '.js', '.ts', '.json', '.svelte'],
+          extensions: ['.mjs', '.js', '.ts', '.json', '.svelte', '.css'],
           browser: true,
           dedupe: ['svelte'],
           preferBuiltins: false,
