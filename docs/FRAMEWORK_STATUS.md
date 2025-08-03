@@ -1,7 +1,7 @@
-# WebUI Desktop SDK Experiment - Status Report
+# WebUI Desktop SDK - Status Report
 
 ## Overview
-We've successfully created an experimental desktop framework that provides WinForms-like simplicity for building applications with Svelte and modern web technologies. The framework is distributed as a single NuGet package containing both runtime and build tools.
+We've successfully created a desktop framework that provides WinForms-like simplicity for building applications with Svelte and modern web technologies. The framework is distributed as a single NuGet package containing both runtime and build tools.
 
 ## Current Implementation
 
@@ -33,18 +33,23 @@ We've successfully created an experimental desktop framework that provides WinFo
 
 ### Project Structure
 ```
-experiments/
-├── src/
-│   ├── WebUI.Desktop/          # Runtime library
-│   │   └── WebUI.cs           # Main API
-│   └── WebUI.Desktop.Sdk/      # MSBuild SDK
-│       ├── Sdk/
-│       │   ├── Sdk.props      # Default project settings
-│       │   └── Sdk.targets    # Build pipeline
-│       └── tools/build/       # Node.js build tools
-│           ├── build-panel.js # Svelte compilation
-│           ├── base.css       # Tailwind base
-│           └── package.json   # Build dependencies
+src/
+├── WebUI.Desktop/              # Runtime library & SDK
+│   ├── WebUI.cs               # Main API
+│   ├── WebUIWindow.cs         # Window management
+│   ├── RoundedForm.cs         # Base form with styling
+│   ├── FramelessResizeBorder.cs # Resize functionality
+│   ├── Commands/              # Command system
+│   ├── Bridge/                # Host API bridge
+│   ├── Components/            # Built-in Svelte components
+│   ├── Api/                   # TypeScript API
+│   ├── build/                 # MSBuild targets
+│   │   ├── WebUI.Desktop.props
+│   │   └── WebUI.Desktop.targets
+│   └── tools/build/           # Node.js build tools
+│       ├── build-panel.js     # Svelte compilation
+│       ├── base.css           # Tailwind base
+│       └── package.json       # Build dependencies
 └── samples/
     └── HelloWorld/            # Sample app
         ├── HelloWorld.csproj

@@ -1,8 +1,8 @@
-# WebUI Framework Vision - Experimental Prototype
+# WebUI Framework Vision
 
 ## Executive Summary
 
-WebUI is an experimental .NET library that brings the simplicity of WinForms and the modern builder pattern of ASP.NET Core to desktop application development using web technologies. Just add a NuGet package, drop in Svelte files, and run - no configuration required.
+WebUI is a .NET library that brings the simplicity of WinForms and the modern builder pattern of ASP.NET Core to desktop application development using web technologies. Just add a NuGet package, drop in Svelte files, and run - no configuration required.
 
 **Core Philosophy**: Make desktop development as simple as `WebUI.Run("MainWindow")` while leveraging modern web technologies.
 
@@ -156,14 +156,12 @@ WebUI.Desktop.nupkg
 
 **Development Repository Structure:**
 ```
-experiments/
-├── src/
-│   ├── WebUI.Desktop/           (combined runtime + SDK)
-│   │   ├── build/              (MSBuild files)
-│   │   ├── tools/              (build tools)
-│   │   └── *.cs                (runtime code)
-│   └── WebUI.Api/              (TypeScript API)
-│       └── src/
+src/
+├── WebUI.Desktop/              (combined runtime + SDK)
+│   ├── build/                 (MSBuild files)
+│   ├── tools/                 (build tools)
+│   ├── Api/                   (TypeScript API)
+│   └── *.cs                   (runtime code)
 ├── samples/
 │   └── HelloWorld/
 │       ├── HelloWorld.csproj
@@ -498,4 +496,4 @@ The goal is simple: **From idea to running desktop app in under 5 minutes.**
 
 ---
 
-*This is an experimental vision document. The actual implementation should prioritize simplicity and developer experience above all else.*
+*This vision document guides the implementation. The framework prioritizes simplicity and developer experience above all else.*
