@@ -29,7 +29,7 @@ public class RoundedForm : Form
     
     #endregion
     
-    private FramelessResizeBorder _resizeBorder;
+    private FramelessResizeBorder? _resizeBorder;
     private bool _enableRoundedCorners = true;
     private bool _enableFramelessResize = true;
 
