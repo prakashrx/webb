@@ -2,127 +2,46 @@
   import { invoke } from '@webui/api';
   import { TitleBar } from '@webui/components';
   import Counter from './components/Counter.svelte';
-  import { format } from 'date-fns';
   
-  let count = 0;
-  let message = '';
-  let echoResult = '';
-  let windowTitle = 'HelloWorld';
+  let greeting = '';
   
-  function increment() {
-    count += 1;
-  }
-  
-  async function testEcho() {
+  async function sayHello() {
     try {
-      const result = await invoke('test.echo', { message: `Hello from WebUI! Count: ${count}` });
-      echoResult = result;
-      message = `Received: ${result}`;
+      const result = await invoke('test.getGreeting', { name: 'WebUI' });
+      greeting = result;
     } catch (error) {
-      message = `Error: ${error.message}`;
-    }
-  }
-  
-  async function getTime() {
-    try {
-      const time = await invoke('test.getTime');
-      // Use date-fns to format the time
-      const formattedTime = format(new Date(time), 'PPpp');
-      message = `Current time: ${formattedTime}`;
-    } catch (error) {
-      message = `Error: ${error.message}`;
-    }
-  }
-
-  async function addNumbers() {
-    try {
-      const result = await invoke('test.addNumbers', { a: count, b: 10 });
-      message = `Result: ${result}`;
-    } catch (error) {
-      message = `Error: ${error.message}`;
-    }
-  }
-  
-  // Update window title
-  async function updateTitle() {
-    try {
-      await invoke('window.setTitle', { title: windowTitle });
-      message = `Title updated to: ${windowTitle}`;
-    } catch (error) {
-      message = `Error: ${error.message}`;
+      greeting = `Error: ${error.message}`;
     }
   }
 </script>
 
-<div class="flex flex-col h-screen">
+<div class="flex flex-col h-screen bg-gray-50">
   <!-- Built-in TitleBar component -->
-  <TitleBar 
-    title={windowTitle}
-    showControls={true}
-  />
+  <TitleBar title="Hello World" />
   
-  <main class="flex-1 flex flex-col items-center justify-center p-8 overflow-auto">
-  <h1 class="text-6xl font-thin text-orange-500 mb-4">Hello WebUI! 🚀</h1>
-  <p class="text-gray-600 mb-8">This is a Svelte component.</p>
-  <button 
-    on:click={increment}
-    class="px-6 py-3 text-lg font-medium text-orange-500 bg-white border-2 border-orange-500 rounded hover:bg-orange-500 hover:text-white transition-colors duration-200"
-  >
-    Clicked Button {count} {count === 1 ? 'time' : 'times'}
-  </button>
-  
-  <div class="mt-8 space-x-4">
+  <main class="flex-1 flex flex-col items-center justify-center p-8">
+    <div class="text-center mb-12">
+      <h1 class="text-5xl font-light text-gray-800 mb-4">Hello, WebUI!</h1>
+      <p class="text-xl text-gray-600">A modern desktop framework for .NET</p>
+    </div>
+    
+    <!-- Simple demo button -->
     <button 
-      on:click={testEcho}
-      class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+      on:click={sayHello}
+      class="px-8 py-3 text-lg bg-blue-500 text-white rounded-lg hover:bg-blue-600 transform hover:scale-105 transition-all duration-200 shadow-lg"
     >
-      Test Echo
+      Say Hello
     </button>
     
-    <button 
-      on:click={getTime}
-      class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-    >
-      Get Time
-    </button>
-
-    <button 
-      on:click={addNumbers}
-      class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-    >
-      Add Numbers
-    </button>
-  </div>
-  
-  <!-- Local Component Example -->
-  <div class="mt-8 w-80">
-    <Counter label="Local Component Counter" bind:count />
-  </div>
-  
-  <!-- Title Update Section -->
-  <div class="mt-8 p-4 bg-gray-50 rounded-lg">
-    <h3 class="text-lg font-semibold mb-4">Dynamic Title</h3>
+    {#if greeting}
+      <div class="mt-6 p-4 bg-white rounded-lg shadow text-gray-700">
+        {greeting}
+      </div>
+    {/if}
     
-    <div class="flex items-center space-x-2">
-      <input 
-        type="text" 
-        bind:value={windowTitle}
-        placeholder="Window title"
-        class="px-3 py-2 border rounded flex-1"
-      />
-      <button 
-        on:click={updateTitle}
-        class="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600"
-      >
-        Update Title
-      </button>
+    <!-- Local Component Example -->
+    <div class="mt-12">
+      <Counter />
     </div>
-  </div>
-  
-  {#if message}
-    <div class="mt-4 p-4 bg-gray-100 rounded">
-      {message}
-    </div>
-  {/if}
   </main>
 </div>

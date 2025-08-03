@@ -5,9 +5,6 @@
   
   <ItemGroup>
     <ProjectReference Include="..\..\WebUI.Desktop\WebUI.Desktop.csproj" />
-
-    <!-- Npm package references -->
-    <NpmPackage Include="date-fns" Version="2.30.0" />
   </ItemGroup>
   
   <ItemGroup>
