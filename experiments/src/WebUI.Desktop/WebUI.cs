@@ -1,6 +1,8 @@
 using System;
+using System.Drawing;
 using System.IO;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -32,7 +34,7 @@ public static class WebUI
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
         
-        var form = new Form
+        var window = new WebUIWindow
         {
             Text = options.Title ?? mainPanelName,
             Width = options.Width,
@@ -41,15 +43,9 @@ public static class WebUI
             StartPosition = options.CenterScreen ? FormStartPosition.CenterScreen : FormStartPosition.WindowsDefaultLocation
         };
         
-        var webView = new WebView2
+        window.Load += async (s, e) =>
         {
-            Dock = DockStyle.Fill
-        };
-        
-        form.Controls.Add(webView);
-        
-        form.Load += async (s, e) =>
-        {
+            var webView = window.WebView;
             await webView.EnsureCoreWebView2Async();
             
             // Set up COM bridge
@@ -119,7 +115,7 @@ public static class WebUI
             }
         };
         
-        Application.Run(form);
+        Application.Run(window);
     }
     
     private static void SetupHotReload(WebView2 webView, string panelsPath, string panelName)
