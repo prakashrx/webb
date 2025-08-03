@@ -2,6 +2,7 @@
   import { invoke } from '@webui/api';
   import { TitleBar } from '@webui/components';
   import Counter from './components/Counter.svelte';
+  import { format } from 'date-fns';
   
   let count = 0;
   let message = '';
@@ -25,7 +26,9 @@
   async function getTime() {
     try {
       const time = await invoke('test.getTime');
-      message = `Current time: ${time}`;
+      // Use date-fns to format the time
+      const formattedTime = format(new Date(time), 'PPpp');
+      message = `Current time: ${formattedTime}`;
     } catch (error) {
       message = `Error: ${error.message}`;
     }
@@ -65,7 +68,7 @@
     on:click={increment}
     class="px-6 py-3 text-lg font-medium text-orange-500 bg-white border-2 border-orange-500 rounded hover:bg-orange-500 hover:text-white transition-colors duration-200"
   >
-    Clicked {count} {count === 1 ? 'time' : 'times'}
+    Clicked Button {count} {count === 1 ? 'time' : 'times'}
   </button>
   
   <div class="mt-8 space-x-4">

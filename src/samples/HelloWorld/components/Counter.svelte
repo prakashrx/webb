@@ -1,16 +1,16 @@
-<script>
-  export let count = 0;
-  export let label = "Counter";
+<script lang="ts">
+  export let count: number = 0;
+  export let label: string = "Counter";
   
-  function increment() {
+  function increment(): void {
     count += 1;
   }
   
-  function decrement() {
+  function decrement(): void {
     count -= 1;
   }
   
-  function reset() {
+  function reset(): void {
     count = 0;
   }
 </script>

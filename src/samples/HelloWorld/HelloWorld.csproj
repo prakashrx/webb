@@ -10,4 +10,9 @@
   <ItemGroup>
     <Panel Include="MainWindow.svelte" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <!-- Example npm package -->
+    <NpmPackage Include="date-fns" Version="2.30.0" />
+  </ItemGroup>
 </Project>

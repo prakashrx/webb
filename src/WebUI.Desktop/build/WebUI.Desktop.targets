@@ -6,10 +6,12 @@
     <WebUIBuildToolsPath>$(MSBuildThisFileDirectory)..\tools\build</WebUIBuildToolsPath>
     <!-- Api is now always in the same relative location -->
     <WebUIApiPath>$(MSBuildThisFileDirectory)..\Api</WebUIApiPath>
+    <!-- Project-specific WebUI working directory -->
+    <WebUIWorkDir>$(MSBuildProjectDirectory)\obj\webui</WebUIWorkDir>
   </PropertyGroup>
 
   <!-- Check if Node.js is available -->
-  <Target Name="CheckNodeJS" BeforeTargets="CompilePanels;BuildWebUIApi">
+  <Target Name="CheckNodeJS" BeforeTargets="CompilePanels">
     <Exec Command="node --version" 
           ConsoleToMSBuild="true" 
           IgnoreExitCode="true">
@@ -20,30 +22,104 @@
            Text="Node.js is required to build WebUI panels. Please install Node.js from https://nodejs.org" />
   </Target>
 
-  <!-- Build WebUI API if dist doesn't exist or source is newer -->
-  <Target Name="BuildWebUIApi" 
-          BeforeTargets="BeforeBuild;RestoreWebUITools"
-          Condition="!Exists('$(WebUIApiPath)\dist\webui-api.bundle.js') OR $([System.IO.File]::GetLastWriteTime('$(WebUIApiPath)\src\index.ts').Ticks) > $([System.IO.File]::GetLastWriteTime('$(WebUIApiPath)\dist\webui-api.bundle.js').Ticks)">
-    <Message Text="🔨 Building WebUI API..." Importance="high" />
-    <Exec Command="npm install" 
-          WorkingDirectory="$(WebUIApiPath)"
-          Condition="!Exists('$(WebUIApiPath)\node_modules')" />
-    <Exec Command="npm run build" 
-          WorkingDirectory="$(WebUIApiPath)" />
+  <!-- Copy build scripts to obj/webui -->
+  <Target Name="CopyBuildScripts"
+          BeforeTargets="CompilePanels"
+          DependsOnTargets="RestoreWebUIPackages"
+          Condition="'@(Panel)' != ''">
+    <ItemGroup>
+      <BuildFiles Include="$(WebUIBuildToolsPath)\build-panel.js" />
+      <BuildFiles Include="$(WebUIBuildToolsPath)\*.css" />
+      <BuildFiles Include="$(WebUIBuildToolsPath)\*.config.js" />
+      <BuildFiles Include="$(WebUIBuildToolsPath)\tsconfig.json" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BuildFiles)"
+          DestinationFolder="$(WebUIWorkDir)"
+          SkipUnchangedFiles="true" />
+  </Target>
+
+  <!-- Generate merged package.json using inputs/outputs for incremental build -->
+  <Target Name="GeneratePackageJson" 
+          Inputs="@(NpmPackage);$(MSBuildProjectFile);$(WebUIBuildToolsPath)\package.json;$(WebUIApiPath)\package.json"
+          Outputs="$(WebUIWorkDir)\package.json"
+          Condition="'@(Panel)' != ''">
+    <MakeDir Directories="$(WebUIWorkDir)" />
+    
+    <!-- Build the user packages list -->
+    <PropertyGroup>
+      <UserPackageList>@(NpmPackage->'&quot;%(Identity)|%(Version)&quot;', ' ')</UserPackageList>
+    </PropertyGroup>
+    
+    <!-- Merge all package.json files -->
+    <Exec Command="node merge-package-json.js &quot;$(WebUIBuildToolsPath)&quot; &quot;$(WebUIApiPath)&quot; &quot;$(WebUIWorkDir)\package.json&quot; $(UserPackageList)"
+          WorkingDirectory="$(WebUIBuildToolsPath)" />
+  </Target>
+
+  <!-- Generate tsconfig.json for IntelliSense -->
+  <Target Name="GenerateTsConfig"
+          Inputs="$(MSBuildProjectFile)"
+          Outputs="$(WebUIWorkDir)\tsconfig.json"
+          Condition="'@(Panel)' != ''">
+    <PropertyGroup>
+      <TsConfigContent>
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "lib": ["ES2020", "DOM"],
+    "jsx": "preserve",
+    "baseUrl": ".",
+    "paths": {
+      "@webui/api": ["$(WebUIApiPath.Replace('\', '/'))/index.ts"],
+      "@webui/components": ["$(MSBuildThisFileDirectory.Replace('\', '/'))../Components/index.ts"]
+    },
+    "types": ["svelte"],
+    "allowJs": true,
+    "checkJs": false,
+    "strict": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": [
+    "$(MSBuildProjectDirectory.Replace('\', '/'))/**/*.ts",
+    "$(MSBuildProjectDirectory.Replace('\', '/'))/**/*.js",
+    "$(MSBuildProjectDirectory.Replace('\', '/'))/**/*.svelte"
+  ]
+}
+      </TsConfigContent>
+    </PropertyGroup>
+    
+    <WriteLinesToFile File="$(WebUIWorkDir)\tsconfig.json" 
+                      Lines="$(TsConfigContent)" 
+                      Overwrite="true" />
+    <Message Text="📝 Generated tsconfig.json for IntelliSense" Importance="normal" />
   </Target>
 
   <!-- Install npm packages if needed -->
-  <Target Name="RestoreWebUITools" 
+  <Target Name="RestoreWebUIPackages" 
           BeforeTargets="CompilePanels"
-          Condition="!Exists('$(WebUIBuildToolsPath)\node_modules')">
-    <Message Text="📦 Installing WebUI build tools..." Importance="high" />
+          DependsOnTargets="GeneratePackageJson;GenerateTsConfig"
+          Condition="'@(Panel)' != ''">
+    <!-- Check if we need to run npm install -->
+    <PropertyGroup>
+      <NpmInstallRequired>false</NpmInstallRequired>
+      <NpmInstallRequired Condition="!Exists('$(WebUIWorkDir)\node_modules')">true</NpmInstallRequired>
+      <NpmInstallRequired Condition="$([System.IO.File]::GetLastWriteTime('$(WebUIWorkDir)\package.json').Ticks) > $([System.IO.File]::GetLastWriteTime('$(WebUIWorkDir)\node_modules').Ticks)">true</NpmInstallRequired>
+    </PropertyGroup>
+    
+    <Message Text="📦 Installing npm packages in $(WebUIWorkDir)..." 
+             Importance="high" 
+             Condition="'$(NpmInstallRequired)' == 'true'" />
     <Exec Command="npm install" 
-          WorkingDirectory="$(WebUIBuildToolsPath)" />
+          WorkingDirectory="$(WebUIWorkDir)"
+          Condition="'$(NpmInstallRequired)' == 'true'" />
   </Target>
 
   <Target Name="CompilePanels" 
           BeforeTargets="BeforeBuild"
-          DependsOnTargets="CheckNodeJS;RestoreWebUITools"
+          DependsOnTargets="CheckNodeJS;RestoreWebUIPackages;CopyBuildScripts"
           Condition="'@(Panel)' != ''">
     <Message Text="🚀 WebUI: Compiling panels..." Importance="high" />
     <Message Text="📁 Dev Mode: $(WebUIDevMode)" Importance="high" />
@@ -52,24 +128,24 @@
     <!-- Create output directory -->
     <MakeDir Directories="$(OutputPath)panels" />
     
-    <!-- Compile each panel into self-contained bundle -->
-    <Exec Command="node build-panel.js &quot;%(Panel.FullPath)&quot; &quot;$(MSBuildProjectDirectory)\$(OutputPath)panels&quot; $(WebUIDevMode)"
-          WorkingDirectory="$(WebUIBuildToolsPath)"
+    <!-- Compile each panel into self-contained bundle from obj/webui -->
+    <Exec Command="node build-panel.js &quot;%(Panel.FullPath)&quot; &quot;$(MSBuildProjectDirectory)\$(OutputPath)panels&quot; $(WebUIDevMode) &quot;$(MSBuildProjectDirectory)&quot; &quot;$(WebUIApiPath)&quot; &quot;$(MSBuildThisFileDirectory)..\Components&quot; &quot;$(WebUIBuildToolsPath)&quot;"
+          WorkingDirectory="$(WebUIWorkDir)"
           ConsoleToMSBuild="true" />
   </Target>
 
   <!-- Watch target - only compiles panels, doesn't build the project -->
   <Target Name="CompilePanelsOnly" 
-          DependsOnTargets="CheckNodeJS;RestoreWebUITools"
+          DependsOnTargets="CheckNodeJS;RestoreWebUIPackages;CopyBuildScripts"
           Condition="'@(Panel)' != ''">
     <Message Text="🔄 Recompiling panels..." Importance="high" />
     
     <!-- Create output directory if needed -->
     <MakeDir Directories="$(OutputPath)panels" />
     
-    <!-- Compile each panel -->
-    <Exec Command="node build-panel.js &quot;%(Panel.FullPath)&quot; &quot;$(MSBuildProjectDirectory)\$(OutputPath)panels&quot; $(WebUIDevMode)"
-          WorkingDirectory="$(WebUIBuildToolsPath)"
+    <!-- Compile each panel from obj/webui -->
+    <Exec Command="node build-panel.js &quot;%(Panel.FullPath)&quot; &quot;$(MSBuildProjectDirectory)\$(OutputPath)panels&quot; $(WebUIDevMode) &quot;$(MSBuildProjectDirectory)&quot; &quot;$(WebUIApiPath)&quot; &quot;$(MSBuildThisFileDirectory)..\Components&quot; &quot;$(WebUIBuildToolsPath)&quot;"
+          WorkingDirectory="$(WebUIWorkDir)"
           ConsoleToMSBuild="true" />
   </Target>
 

@@ -2,9 +2,9 @@
  * Core invoke functionality for calling C# commands
  */
 
-import { getBridge, generateId } from './bridge.js';
-import type { Commands } from '../types/commands.js';
-import type { InvokeResponse } from '../types/bridge.js';
+import { getBridge, generateId } from './bridge.ts';
+import type { Commands } from '../types/commands.ts';
+import type { InvokeResponse } from '../types/bridge.ts';
 
 // Store pending requests
 const pendingRequests = new Map<string, {
