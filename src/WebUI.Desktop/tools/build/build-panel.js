@@ -100,7 +100,10 @@ export default Component;
               tsconfigFile: false,
               compilerOptions: {
                 target: "ES2020",
-                module: "ESNext"
+                module: "ESNext",
+                moduleResolution: "node",
+                allowSyntheticDefaultImports: true,
+                verbatimModuleSyntax: true
               }
             },
             postcss: {
