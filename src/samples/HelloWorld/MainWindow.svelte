@@ -1,6 +1,7 @@
 <script>
   import { invoke } from '@webui/api';
   import { TitleBar } from '@webui/components';
+  import Counter from './components/Counter.svelte';
   
   let count = 0;
   let message = '';
@@ -88,6 +89,11 @@
     >
       Add Numbers
     </button>
+  </div>
+  
+  <!-- Local Component Example -->
+  <div class="mt-8 w-80">
+    <Counter label="Local Component Counter" bind:count />
   </div>
   
   <!-- Title Update Section -->

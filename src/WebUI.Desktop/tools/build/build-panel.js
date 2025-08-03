@@ -31,6 +31,9 @@ if (!inputFile || !outputDir) {
   process.exit(1);
 }
 
+// Get the project directory (parent of the input file)
+const projectDir = path.dirname(inputFile);
+
 async function build() {
   try {
     const inputName = path.basename(inputFile, '.svelte');
@@ -68,7 +71,12 @@ export default Component;
             postcss: {
               plugins: [
                 tailwindcss({
-                  content: [inputFile]
+                  content: [
+                    inputFile,
+                    path.join(projectDir, '**/*.svelte'),
+                    path.join(projectDir, '**/*.js'),
+                    path.join(projectDir, '**/*.ts')
+                  ]
                 }),
                 autoprefixer()
               ]
@@ -84,7 +92,12 @@ export default Component;
           minimize: !isDevelopment,
           plugins: [
             tailwindcss({
-              content: [inputFile]
+              content: [
+                inputFile,
+                path.join(projectDir, '**/*.svelte'),
+                path.join(projectDir, '**/*.js'),
+                path.join(projectDir, '**/*.ts')
+              ]
             }),
             autoprefixer()
           ]
@@ -92,7 +105,7 @@ export default Component;
         resolve({
           browser: true,
           dedupe: ['svelte'],
-          preferBuiltins: false
+          preferBuiltins: false,
         }),
         commonjs(),
         !isDevelopment && terser()
