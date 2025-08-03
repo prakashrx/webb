@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0-windows</TargetFramework>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\..\WebUI.Desktop\WebUI.Desktop.csproj" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Panel Include="MainWindow.svelte" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <NpmPackage Include="d3" Version="7.8.5" />
+  </ItemGroup>
+</Project>
